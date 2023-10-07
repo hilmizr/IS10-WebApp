@@ -2,9 +2,14 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
+use App\Models\UserKey;
+use Defuse\Crypto\Crypto;
+use Defuse\Crypto\Key;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +32,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'name' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -37,18 +42,28 @@ class LoginRequest extends FormRequest
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function authenticate(): void
+    public function authenticate()
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        
+        $user = User::where('name', $this->name)->first();
+        if (!$user) {
+            // User not found
             RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
+            return redirect()->route('login')->withErrors(['name' => 'Invalid username or password']);
         }
-
+        
+        $key = Key::loadFromAsciiSafeString(UserKey::where('user_id', $user->id)->first()->key);
+        $decryptedPassword = Crypto::decrypt($user->password, $key);
+        
+        if ($decryptedPassword != $this->password) {
+            // Password mismatch
+            RateLimiter::hit($this->throttleKey());
+            return redirect()->route('login')->withErrors(['name' => 'Invalid username or password']);
+        }
+        Auth::login($user);
+        
         RateLimiter::clear($this->throttleKey());
     }
 

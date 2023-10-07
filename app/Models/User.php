@@ -40,6 +40,10 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
     ];
+
+    public function userKey()
+    {
+        return $this->hasOne(UserKey::class);
+    }
 }
