@@ -13,20 +13,27 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('cv.upload') }}" class="mt-6 space-y-6" enctype="multipart/form-data">
+    <form class="p-4 flex flex-col text-white" method="post" action="{{ route('cv.upload') }}" class="mt-6 space-y-6" enctype="multipart/form-data">
         @csrf
         @method('post')
 
-        <div>
-            <input type="file" name="document">
-            <button type="submit">Upload File</button>
-        </div>
+
+        <input type="file" name="document">
+        <button class="bg-green-500 p-4 rounded" type="submit">Upload File</button>
+
     </form>
 
-    <form action="{{ route('cv.download',auth()->user()->name.'_cv_enc.pdf') }}">
+    <form class="p-4 flex flex-col text-white" action="{{ route('cv.download') }}">
         @csrf
         @method('get')
-        <button type="submit">Download file</button>
+        <label for="dropdown">Select an Encryption:</label>
+        <select name="type" id="dropdown">
+            <option value="aes">AES</option>
+            <option value="rc4">RC4</option>
+            <option value="des">DES</option>
+        </select>
+
+        <button class="bg-green-500 p-4 rounded" type="submit">Download file</button>
     </form>
 
 </section>

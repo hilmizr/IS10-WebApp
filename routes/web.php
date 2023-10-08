@@ -26,7 +26,7 @@ Route::get('/dashboard', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/cv', [CVFileController::class, 'index'])->name('cv.index');
     Route::post('/cv', [CVFileController::class, 'store'])->name('cv.upload');
-    Route::get('/cv/{fileName}', [CVFileController::class, 'download'])->name('cv.download');
+    Route::get('/cv/download', [CVFileController::class, 'download'])->name('cv.download');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
