@@ -47,6 +47,49 @@
             @endif
         </div>
 
+        <div>
+            <x-input-label for="date_of_birth" :value="__('Date of Birth')" />
+            <x-text-input id="date_of_birth" name="date_of_birth" type="date" class="mt-1 block w-full" :value="old('date_of_birth', $user->date_of_birth)"  autofocus autocomplete="date_of_birth" />
+            <x-input-error class="mt-2" :messages="$errors->get('date_of_birth')" />
+        </div>
+
+        <div>
+            <x-input-label for="address" :value="__('Address')" />
+            <x-text-input id="address" name="address" type="text" class="mt-1 block w-full" :value="old('address', $user->address)"  autofocus autocomplete="address" />
+            <x-input-error class="mt-2" :messages="$errors->get('address')" />
+        </div>
+
+        <div>
+            <x-input-label for="phone" :value="__('Phone Number')" />
+            <x-text-input id="phone" name="phone" type="Text" class="mt-1 block w-full" :value="old('phone', $user->phone)"  autofocus autocomplete="phone" />
+            <x-input-error class="mt-2" :messages="$errors->get('phone')" />
+        </div>
+
+        <div>
+            <x-input-label for="id_number" :value="__('ID Number')" />
+            <x-text-input id="id_number" name="id_number" type="Text" class="mt-1 block w-full" :value="old('id_number', $user->id_number)"  autofocus autocomplete="id_number" />
+            <x-input-error class="mt-2" :messages="$errors->get('id_number')" />
+        </div>
+
+        <div>
+            <x-input-label for="university" :value="__('University')" />
+            <x-text-input id="university" name="university" type="Text" class="mt-1 block w-full" :value="old('university', $user->university)"  autofocus autocomplete="university" />
+            <x-input-error class="mt-2" :messages="$errors->get('university')" />
+        </div>
+
+        <div>
+            <x-input-label for="major" :value="__('Major')" />
+            <x-text-input id="major" name="major" type="Text" class="mt-1 block w-full" :value="old('major', $user->major)"  autofocus autocomplete="major" />
+            <x-input-error class="mt-2" :messages="$errors->get('major')" />
+        </div>
+
+        <div>
+            <x-input-label for="student_id_number" :value="__('Student ID Number')" />
+            <x-text-input id="student_id_number" name="student_id_number" type="Text" class="mt-1 block w-full" :value="old('student_id_number', $user->student_id_number)"  autofocus autocomplete="student_id_number" />
+            <x-input-error class="mt-2" :messages="$errors->get('student_id_number')" />
+        </div>
+
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 

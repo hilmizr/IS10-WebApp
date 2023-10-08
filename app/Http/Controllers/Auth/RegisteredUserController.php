@@ -34,7 +34,7 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9_]+$/'],
             'email' => ['required', 'string', 'email', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -42,9 +42,11 @@ class RegisteredUserController extends Controller
         $key = Key::createNewRandomKey();
         
         $user = User::create([
-            'name' => $request->name,
+            'username' => $request->username,
+            'email' => Crypto::encrypt($request->email, $key),
             'password' => Crypto::encrypt($request->password, $key),
         ]);
+
         $key = $key->saveToAsciiSafeString();
         // print to console
         
