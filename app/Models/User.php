@@ -19,16 +19,17 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'username',
-        'email',
         'password',
-        'address',
-        'phone',
+        'email',
         'name',
-        'university',
-        'major',
-        'date_of_birth',
         'id_number',
         'student_id_number',
+        'date_of_birth',
+        'address',
+        'phone',
+        'university',
+        'major',
+        'resume_video'
     ];
 
     /**
@@ -46,9 +47,9 @@ class User extends Authenticatable
      *
      * @var array<string, string>
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    // protected $casts = [
+    //     'email_verified_at' => 'datetime',
+    // ];
 
     public function userKey()
     {

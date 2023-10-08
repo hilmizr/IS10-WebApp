@@ -21,6 +21,16 @@
                         {{ __('Profile') }}
                     </x-nav-link>
                 </div>
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                    <x-nav-link :href="route('cv.index')" :active="request()->routeIs('cv.index')">
+                        {{ __('CV Upload') }}
+                    </x-nav-link>
+                </div>
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                    <x-nav-link :href="route('video.index')" :active="request()->routeIs('video.index')">
+                        {{ __('Video Upload') }}
+                    </x-nav-link>
+                </div>
             </div>
 
             <!-- Settings Dropdown -->
