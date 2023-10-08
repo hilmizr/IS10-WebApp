@@ -32,7 +32,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string'],
+            'username' => ['required', 'string', 'regex:/^[a-zA-Z0-9_]+$/'],
             'password' => ['required', 'string'],
         ];
     }
@@ -47,11 +47,13 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         
-        $user = User::where('name', $this->name)->first();
+        $user = User::where('username', $this->username)->first();
         if (!$user) {
             // User not found
             RateLimiter::hit($this->throttleKey());
-            return redirect()->route('login')->withErrors(['name' => 'Invalid username or password']);
+            throw ValidationException::withMessages([
+                'username' => __('auth.failed'),
+            ]);
         }
         
         $key = Key::loadFromAsciiSafeString(UserKey::where('user_id', $user->id)->first()->key);
@@ -60,7 +62,9 @@ class LoginRequest extends FormRequest
         if ($decryptedPassword != $this->password) {
             // Password mismatch
             RateLimiter::hit($this->throttleKey());
-            return redirect()->route('login')->withErrors(['name' => 'Invalid username or password']);
+            throw ValidationException::withMessages([
+                'username' => __('auth.failed'),
+            ]);
         }
         Auth::login($user);
         
