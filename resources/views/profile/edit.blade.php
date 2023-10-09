@@ -17,7 +17,7 @@
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+            <!-- <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
                 <div class="max-w-xl">
                     @if (Auth::user() instanceof App\Models\CompanyUser)
                         @include('profile.partials.company-update-password-form')
@@ -35,7 +35,7 @@
                         @include('profile.partials.delete-user-form')
                     @endif
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 </x-app-layout>

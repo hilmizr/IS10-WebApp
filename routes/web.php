@@ -11,6 +11,7 @@ use App\Http\Controllers\CVFileController;
 use App\Http\Controllers\JobController;
 use Faker\Provider\ar_EG\Company;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\VideoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/job', [JobController::class, 'index'])->name('job.index');
+    Route::get('/video', [VideoController::class, 'index'])->name('video.index');
 });
 
 Route::middleware('guest')->group(function () {
