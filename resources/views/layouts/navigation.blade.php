@@ -4,22 +4,54 @@
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
-                    </a>
-                </div>
+                @if (Auth::user() instanceof App\Models\CompanyUser)
+                    <div class="shrink-0 flex items-center">
+                        <a href="{{ route('company-dashboard') }}">
+                            <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                        </a>
+                    </div>
+                @else
+                    <div class="shrink-0 flex items-center">
+                        <a href="{{ route('dashboard') }}">
+                            <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                        </a>
+                    </div>
+                @endif
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+                    @if (Auth::user() instanceof App\Models\CompanyUser)
+                        <x-nav-link :href="route('company-dashboard')" :active="request()->routeIs('dashboard') | request()->routeIs('company-dashboard')">
+                            {{ __('Dashboard') }}
+                        </x-nav-link>
+                    @else
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard') | request()->routeIs('company-dashboard')">
+                            {{ __('Dashboard') }}
+                        </x-nav-link>
+                    @endif
                 </div>
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <x-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')">
-                        {{ __('Profile') }}
-                    </x-nav-link>
+                    @if (Auth::user() instanceof App\Models\CompanyUser)
+                        <x-nav-link :href="route('company-profile.edit')" :active="request()->routeIs('company-profile.edit')">
+                            {{ __('Profile') }}
+                        </x-nav-link>
+                    @else
+                        <x-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')">
+                            {{ __('Profile') }}
+                        </x-nav-link>
+                    @endif
+                </div>
+
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                    @if (Auth::user() instanceof App\Models\CompanyUser)
+                        <x-nav-link :href="route('company-job.index')" :active="request()->routeIs('company-job.index')">
+                            {{ __('Jobs') }}
+                        </x-nav-link>
+                    @else
+                        <x-nav-link :href="route('job.index')" :active="request()->routeIs('job.index')">
+                            {{ __('Jobs') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -39,9 +71,9 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
+                        {{--  <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
-                        </x-dropdown-link>
+                        </x-dropdown-link>  --}}
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
@@ -80,15 +112,20 @@
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
-                <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->username }}</div>
+                {{--  <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>  --}}
             </div>
 
             <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
+                @if (Auth::user() instanceof App\Models\CompanyUser)
+                    <x-responsive-nav-link :href="route('company-profile.edit')">
+                        {{ __('Profile') }}
+                    </x-responsive-nav-link>
+                @else
+                    <x-responsive-nav-link :href="route('profile.edit')">
+                        {{ __('Profile') }}
+                    </x-responsive-nav-link>
+                @endif
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
