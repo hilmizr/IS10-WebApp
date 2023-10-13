@@ -11,84 +11,87 @@ use Defuse\Crypto\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Session;
 
-class CVFileController extends Controller
+class IDCardController extends Controller
 {
     public function index()
     {
-
-        return view('upload.uploadfile', ['title' => 'Form']);
+        return view('upload.uploadIDCard', ['title' => 'ID Card Form']);
     }
 
     public function store(Request $request)
     {
-        // Validasi
+        // dd("upload hit");
+        // Validation
         $validated = $request->validate([
-            'document' => 'required|mimes:doc,docx,pdf,xml|max:10000',
+            'document' => 'required|mimes:jpg,jpeg,png|max:10000',
         ]);
 
-        // Proses upload file
+        // Process upload file
         $document = $request->file('document');
-        $documentName = $request->user()->username . '_cv.' . $document->extension();
-        $encdocumentName = $request->user()->username . '_cv_enc';
+        $documentName = $request->user()->username . '_idcard.' . $document->extension();
+        $encdocumentName = $request->user()->username . '_idcard_enc';
         $path = $request->file('document')->storeAs(
-            'files',
+            'idcards',
             $documentName
         );
+
+        // Store the file extension in the session
+        session(['idcard_file_extension' => $document->extension()]);
+
         Log::info($path);
         $key = Key::loadFromAsciiSafeString($request->user()->userKey->key);
-        //File::encryptFile(Storage::path($path) ,Storage::path('files/'.$encdocumentName), $key);
-        $this->encryptFileUsingAES(Storage::path($path), Storage::path('files/' . $encdocumentName . '_aes.pdf'), $request->user()->userKey->key);
-        $this->encryptFileUsingRC4(Storage::path($path), Storage::path('files/' . $encdocumentName . '_rc4.pdf'), $request->user()->userKey->key);
-        $this->encryptFileUsingDES(Storage::path($path), Storage::path('files/' . $encdocumentName . '_des.pdf'), $request->user()->userKey->key);
+        $this->encryptFileUsingAES(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_aes.' . $document->extension()), $request->user()->userKey->key);
+        $this->encryptFileUsingRC4(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_rc4.' . $document->extension()), $request->user()->userKey->key);
+        $this->encryptFileUsingDES(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_des.' . $document->extension()), $request->user()->userKey->key);
 
         Storage::delete($path);
-        // Tampilkan flash message
+
+        // Display flash message
         session()->flash('success', 'Data berhasil disimpan');
-        return view('upload.uploadfile', ['data' => $validated, 'fileName' => $documentName, 'title' => 'Form Result']);
+        return view('upload.uploadIDCard', ['data' => $validated, 'fileName' => $documentName, 'title' => 'ID Card Form Result']);
     }
 
     public function download(Request $request)
     {
-        dd($request);
+        // dd("download hit");
         $validated = $request->validate([
             'type' => 'required|string',
         ]);
-        // Specify the path to the encrypted file
-        $encryptedFilePath = Storage::path('files/' . $request->user()->username . '_cv_enc_' . $request->type . '.pdf');
 
-        if (!Storage::exists('files/' . $request->user()->username . '_cv_enc_' . $request->type . '.pdf')) {
+        // Retrieve the file extension from the session
+        $fileExtension = session('idcard_file_extension', 'jpg');
+
+        // Specify the path to the encrypted file using the retrieved file extension
+        $encryptedFilePath = Storage::path('idcards/' . $request->user()->username . '_idcard_enc_' . $request->type . '.' . $fileExtension);
+        
+        if (!Storage::exists($encryptedFilePath)) {
             session()->flash('error', 'File tidak ditemukan');
             Log::info($encryptedFilePath);
-            Log::info(!Storage::exists($encryptedFilePath));
 
-            return redirect()->route('cv.index');
+            return redirect()->route('idcard.index');
         }
 
         $key = Key::loadFromAsciiSafeString($request->user()->userKey->key);
 
-
-        $tempFilePath = tempnam(sys_get_temp_dir(), 'decrypted_file');
-        //File::decryptFile($encryptedFilePath,$tempFilePath, $key);
+        $tempFilePath = tempnam(sys_get_temp_dir(), 'decrypted_idcard');
         switch ($request->type) {
             case "aes":
-                $this->decryptFileUsingAES($encryptedFilePath, $tempFilePath,  $request->user()->userKey->key);
-
+                $this->decryptFileUsingAES($encryptedFilePath, $tempFilePath, $request->user()->userKey->key);
                 break;
             case "rc4":
-                $this->decryptFileUsingRC4($encryptedFilePath, $tempFilePath,  $request->user()->userKey->key);
-
+                $this->decryptFileUsingRC4($encryptedFilePath, $tempFilePath, $request->user()->userKey->key);
                 break;
             case "des":
-                $this->decryptFileUsingDES($encryptedFilePath, $tempFilePath,  $request->user()->userKey->key);
-
+                $this->decryptFileUsingDES($encryptedFilePath, $tempFilePath, $request->user()->userKey->key);
                 break;
             default:
                 //TODO: do some error handling here in case there is nothing provided
-                echo "aaaaaaaa";
+                echo "Error!";
         }
 
-        return response()->download($tempFilePath, 'decrypted_' . $request->user()->username . '_cv_enc_' . $request->type . '.pdf')->deleteFileAfterSend(true);
+        return response()->download($tempFilePath, 'decrypted_' . $request->user()->username . '_idcard_enc_' . $request->extension . '.' . $request->type)->deleteFileAfterSend(true);
     }
 
     public function encryptFileUsingAES($sourcePath, $destinationPath, $key)
