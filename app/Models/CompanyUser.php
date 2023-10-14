@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class CompanyUser extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -17,19 +16,15 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+    protected $guard = 'company_user';
+
     protected $fillable = [
         'username',
-        'password',
         'email',
-        'name',
-        'id_number',
-        'student_id_number',
-        'date_of_birth',
+        'password',
         'address',
         'phone',
-        'university',
-        'major',
-        'resume_video'
+        'name',
     ];
 
     /**
@@ -47,17 +42,18 @@ class User extends Authenticatable
      *
      * @var array<string, string>
      */
-    // protected $casts = [
-    //     'email_verified_at' => 'datetime',
-    // ];
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
 
-    public function userKey()
+    public function companyKey()
     {
-        return $this->hasOne(UserKey::class);
+        return $this->hasOne(CompanyKey::class);
     }
 
     public function jobs()
     {
-        return $this->belongsToMany(Job::class);
+        return $this->hasMany(Job::class);
     }
+
 }
