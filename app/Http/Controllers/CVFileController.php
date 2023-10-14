@@ -50,6 +50,7 @@ class CVFileController extends Controller
 
     public function download(Request $request)
     {
+        $document = $request->file('document');
         $validated = $request->validate([
             'type' => 'required|string',
         ]);

@@ -16,18 +16,17 @@ class IDCardController extends Controller
 {
     public function index()
     {
-
         return view('upload.uploadIDCard', ['title' => 'Form']);
     }
 
     public function store(Request $request)
     {
-        // Validasi
+        // Validation
         $validated = $request->validate([
             'document' => 'required|mimes:jpg,jpeg,png|max:10000',
         ]);
 
-        // Proses upload file
+        // Process file upload
         $document = $request->file('document');
         $documentName = $request->user()->username . '_idcard.' . $document->extension();
         $encdocumentName = $request->user()->username . '_idcard_enc';
@@ -36,21 +35,24 @@ class IDCardController extends Controller
             $documentName
         );
 
-        // Store the file extension in the session
-        // session(['idcard_file_extension' => $document->extension()]);
-
         $fileExtension = '.' . $document->extension();
-        session(['idcard_file_extension' => $fileExtension]);
+
+        // Save metadata
+        $metadata = [
+            "fileExtension" => $fileExtension
+        ];
+        $metadataPath = 'idcards/' . $request->user()->username . '_idcard_enc_metadata.json';
+        Storage::put($metadataPath, json_encode($metadata));
 
         Log::info($path);
         $key = Key::loadFromAsciiSafeString($request->user()->userKey->key);
-        //File::encryptFile(Storage::path($path) ,Storage::path('idcards/'.$encdocumentName), $key);
         $this->encryptFileUsingAES(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_aes' . $fileExtension), $request->user()->userKey->key);
         $this->encryptFileUsingRC4(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_rc4' . $fileExtension), $request->user()->userKey->key);
         $this->encryptFileUsingDES(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_des' . $fileExtension), $request->user()->userKey->key);
 
         Storage::delete($path);
-        // Tampilkan flash message
+
+        // Display flash message
         session()->flash('success', 'Data berhasil disimpan');
         return view('upload.uploadIDCard', ['data' => $validated, 'fileName' => $documentName, 'title' => 'Form Result']);
     }
@@ -61,8 +63,14 @@ class IDCardController extends Controller
             'type' => 'required|string',
         ]);
 
-        $fileExtension = session('idcard_file_extension', 'jpg');
-        // dd($fileExtension);
+        // Fetch metadata
+        $metadataPath = 'idcards/' . $request->user()->username . '_idcard_enc_metadata.json';
+        if (!Storage::exists($metadataPath)) {
+            session()->flash('error', 'Metadata tidak ditemukan');
+            return redirect()->route('idcard.index');
+        }
+        $metadata = json_decode(Storage::get($metadataPath), true);
+        $fileExtension = $metadata['fileExtension'];
 
         // Specify the path to the encrypted file
         $encryptedFilePath = Storage::path('idcards/' . $request->user()->username . '_idcard_enc_' . $request->type . $fileExtension);
