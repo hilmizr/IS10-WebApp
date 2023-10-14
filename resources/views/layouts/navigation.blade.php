@@ -53,16 +53,18 @@
                         </x-nav-link>
                     @endif
                 </div>
-                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <x-nav-link :href="route('cv.index')" :active="request()->routeIs('cv.index')">
-                        {{ __('CV Upload') }}
-                    </x-nav-link>
-                </div>
-                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <x-nav-link :href="route('video.index')" :active="request()->routeIs('video.index')">
-                        {{ __('Video Upload') }}
-                    </x-nav-link>
-                </div>
+                @if (Auth::user() instanceof App\Models\User)
+                    <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                        <x-nav-link :href="route('cv.index')" :active="request()->routeIs('cv.index')">
+                            {{ __('CV Upload') }}
+                        </x-nav-link>
+                    </div>
+                    <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                        <x-nav-link :href="route('video.index')" :active="request()->routeIs('video.index')">
+                            {{ __('Video Upload') }}
+                        </x-nav-link>
+                    </div>
+                @endif
             </div>
 
             <!-- Settings Dropdown -->
@@ -89,11 +91,17 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
 
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
+                            @if (Auth::user() instanceof App\Models\CompanyUser)
+                                <x-dropdown-link :href="route('company-logout')">
+                                    {{ __('Log Out') }}
+                                </x-dropdown-link>
+                            @else
+                                <x-dropdown-link :href="route('logout')"
+                                        onclick="event.preventDefault();
+                                                    this.closest('form').submit();">
+                                    {{ __('Log Out') }}
+                                </x-dropdown-link>
+                            @endif
                         </form>
                     </x-slot>
                 </x-dropdown>

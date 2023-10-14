@@ -26,8 +26,32 @@
                     </div>
                     <div class="p-6 text-gray-900 dark:text-gray-100">
                         Description:{{ $job->description }}
-
                     </div>
+                    {{--  button  --}}
+                    <div class="p-6 text-gray-900 dark:text-gray-100">
+                        @if (Auth::user() instanceof App\Models\CompanyUser)
+                        <form action="{{ route('delete-job', ['id' => $job->id]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this job?');">
+                            <button type="button" class="font-semibold bg-gray-800 text-gray-200 text-sm">
+                                <a href="{{ route('appliers', ['id' => $job->id]) }}">    
+                                    Appliers
+                                </a>
+                            </button>
+                            <button type="button" class="font-semibold bg-gray-800 text-gray-200 text-sm">
+                                <a href="{{ route('edit-job', ['id' => $job->id]) }}">    
+                                    Edit
+                                </a>
+                            </button>
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="font-semibold bg-gray-800 text-gray-200 text-sm">Delete</button>
+                        </form>
+                        @else
+                            <button type="button" class="font-semibold bg-gray-800 text-gray-200 text-sm">
+                                <a href="{{ route('apply-job', ['id' => $job->id]) }}">    
+                                    Apply
+                                </a>
+                            </button>
+                        @endif
                 </div>   
             </div>
         </div>

@@ -110,4 +110,6 @@ class CompanyProfileController extends Controller
 
         return Redirect::to('/');
     }
+
+    
 }

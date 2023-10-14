@@ -42,8 +42,15 @@ Route::middleware('company.auth')->group(function () {
     Route::delete('/company-profile', [CompanyProfileController::class, 'destroy'])->name('company-profile.destroy');
     Route::put('company-password', [PasswordController::class, 'update'])->name('company-password.update');
     Route::get('/company-job', [JobController::class, 'company_index'])->name('company-job.index');
+    Route::get('/company-logout', [CompanyRegisteredUserController::class, 'logout'])
+                ->name('company-logout');
     Route::get('/create-job', [JobController::class, 'create'])->name('create-job');
     Route::post('/create-job', [JobController::class, 'store']);
+    Route::get('/edit-job/{id}', [JobController::class, 'edit'])->name('edit-job');
+    Route::post('/edit-job/{id}', [JobController::class, 'update']);
+    Route::delete('/delete-job/{id}', [JobController::class, 'destroy'])->name('delete-job');
+    Route::get('/appliers/{id}', [JobController::class, 'appliers'])->name('appliers');
+
 });
 
 // Route::get('/dashboard', function () {
@@ -61,6 +68,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/job', [JobController::class, 'index'])->name('job.index');
     Route::get('/video', [VideoController::class, 'index'])->name('video.index');
+    Route::get('/apply/{id}', [JobController::class, 'apply'])->name('apply-job');
 });
 
 Route::middleware('guest')->group(function () {

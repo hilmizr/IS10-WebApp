@@ -19,6 +19,7 @@ use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 use Defuse\Crypto\Crypto;
 use Defuse\Crypto\Key;
+use Illuminate\Support\Facades\Redirect;
 
 class CompanyRegisteredUserController extends Controller
 {
@@ -89,5 +90,15 @@ class CompanyRegisteredUserController extends Controller
 
         // dd(Auth::guard('company_user')->user(), Auth::user()->username);
         return redirect()->intended(RouteServiceProvider::COMPANY_HOME);
+    }
+
+    public function logout(Request $request): RedirectResponse
+    {
+        Auth::guard('company_user')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return Redirect::to('/');
     }
 }
