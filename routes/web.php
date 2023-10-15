@@ -12,6 +12,7 @@ use App\Http\Controllers\JobController;
 use Faker\Provider\ar_EG\Company;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\VideoController;
+use App\Http\Controllers\IDCardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,9 +67,14 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/idcard', [IDCardController::class, 'index'])->name('idcard.index');
+    Route::post('/idcard', [IDCardController::class, 'store'])->name('idcard.upload');
+    Route::get('/idcard/download', [IDCardController::class, 'download'])->name('idcard.download');
+
     Route::get('/job', [JobController::class, 'index'])->name('job.index');
     Route::get('/video', [VideoController::class, 'index'])->name('video.index');
     Route::get('/apply/{id}', [JobController::class, 'apply'])->name('apply-job');
+
 });
 
 Route::middleware('guest')->group(function () {

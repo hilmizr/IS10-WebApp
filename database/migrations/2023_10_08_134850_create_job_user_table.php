@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->foreignId('job_id')->constrained('job')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->unique(['user_id', 'job_id']);
+            $table->foreignId('job_id')->constrained('jobs')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->unique(['user_id', 'job_id']);            
         });
     }
 
