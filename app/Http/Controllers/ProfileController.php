@@ -95,9 +95,11 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
-        ]);
+        $decrypted_current = Crypto::decrypt($request->user()->password, Key::loadFromAsciiSafeString($request->user()->userKey->key));
+        
+        if ($request->password != $decrypted_current){
+            return back()->withErrors(['password' => 'The provided password does not match your current password.']);
+        }
 
         $user = $request->user();
 

@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('job_user', function (Blueprint $table) {
+        Schema::create('company_keys', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('company_user_id')->constrained('company_users')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->text('key');
             $table->timestamps();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->foreignId('job_id')->constrained('jobs')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->unique(['user_id', 'job_id']);            
         });
     }
 
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('job_user');
+        Schema::dropIfExists('company_key');
     }
 };
