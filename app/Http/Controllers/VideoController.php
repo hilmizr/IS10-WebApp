@@ -26,26 +26,29 @@ class VideoController extends Controller
            'type' => 'required'
         ]);   
 
-        $request->user()->resume_video = $request->type;
-        $request->user()->save();
-
-        $path = $request->file('video')->storeAs('videos', "temp.mp4", 'public');
+        $video = $request->file('video');
+        $videoName = $request->user()->username . '_video.' . $video->extension();
+        $encvideoName = $request->user()->username . '_video_enc';
+        $path = $request->file('video')->storeAs(
+            'videos',
+            $videoName
+        );
 
         Log::info($path);
         $key=Key::loadFromAsciiSafeString($request->user()->userKey->key);
 
         switch ($request->type) {
             case 'aes':
-                $this->encryptFileUsingAES(Storage::path('public/videos/temp.mp4') ,Storage::path('files/'.$request->user()->username.'_video_aes.mp4'), $request->user()->userKey->key );
+                $this->encryptFileUsingAES(Storage::path($path) ,Storage::path('files/' . $encvideoName . '_aes.mp4'), $request->user()->userKey->key );
 
             case 'rc4':
-                $this->encryptFileUsingAES(Storage::path('public/videos/temp.mp4') ,Storage::path('files/'.$request->user()->username.'_video_rc4.mp4'), $request->user()->userKey->key );
+                $this->encryptFileUsingRC4(Storage::path($path) ,Storage::path('files/' . $encvideoName . '_rc4.mp4'), $request->user()->userKey->key );
             
             case 'des':
-                $this->encryptFileUsingAES(Storage::path('public/videos/temp.mp4') ,Storage::path('files/'.$request->user()->username.'_video_des.mp4'), $request->user()->userKey->key );    
+                $this->encryptFileUsingDES(Storage::path($path) ,Storage::path('files/' . $encvideoName . '_des.mp4'), $request->user()->userKey->key );    
         }
 
-        Storage::delete('public/videos/temp.mp4');
+        Storage::delete($path);
 
         return redirect()->back()->with('success', 'Video uploaded successfully.');
     }
@@ -55,8 +58,6 @@ class VideoController extends Controller
         $type = $request->user()->resume_video;
         
         $encryptedFilePath = Storage::path('files/'.$request->user()->username . '_video_'.$type.'.mp4');
-
-        dd($encryptedFilePath);
 
         if (!Storage::exists($encryptedFilePath)){
             session()->flash('error', 'File tidak ditemukan');
@@ -92,7 +93,7 @@ class VideoController extends Controller
         return response()->download($tempFilePath, 'decrypted_'.$request->user()->username . '_video_'.$type.'.mp4')->deleteFileAfterSend(true);
     }
 
-    public function encryptFileUsingAES( $sourcePath, $destinationPath,$key)
+    public function encryptFileUsingAES($sourcePath, $destinationPath, $key)
     {
         $cipher = 'aes-256-cbc';
         $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($cipher));
@@ -103,7 +104,7 @@ class VideoController extends Controller
         file_put_contents($destinationPath, $iv . $encryptedData);
     }
 
-    public function decryptFileUsingAES($sourcePath, $destinationPath,$key)
+    public function decryptFileUsingAES($sourcePath, $destinationPath, $key)
     {
         $cipher = 'aes-256-cbc';
         $data = file_get_contents($sourcePath);
