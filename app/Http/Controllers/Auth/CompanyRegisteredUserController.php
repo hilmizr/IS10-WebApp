@@ -46,19 +46,8 @@ class CompanyRegisteredUserController extends Controller
         // random generate 16 char string
         $key = Key::createNewRandomKey();
         
-        $user = CompanyUser::create([
-            'username' => $request->username,
-            'email' => Crypto::encrypt($request->email, $key),
-            'password' => Crypto::encrypt($request->password, $key),
-        ]);
+        $user = $this->UserEncryptedAES($request, $key);
         
-        $key = $key->saveToAsciiSafeString();
-        // print to consolez
-        
-        $userkey = CompanyKey::create([
-            'company_user_id' => $user->id,
-            'key' => $key,
-        ]);
         // dd($key);
         
         event(new Registered($user));
@@ -100,5 +89,66 @@ class CompanyRegisteredUserController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    public function UserEncryptedAES($request, $key)
+    {
+        $cipher = 'aes-256-cbc';
+        
+        $key = $key->saveToAsciiSafeString();
+        $iv = substr($key, 0, 16);
+        
+        $user = CompanyUser::create([
+            'username' => $request->username,
+            'email' => base64_encode(openssl_encrypt($request->email, $cipher, $key, 0, $iv)),
+            'password' => base64_encode(openssl_encrypt($request->password, $cipher, $key, 0, $iv)),
+        ]);
+        
+        $userkey = CompanyKey::create([
+            'company_user_id' => $user->id,
+            'key' => $key,
+        ]);
+
+        return $user;
+    }
+
+    public function UserEncryptedRC4($request, $key)
+    {
+        $cipher = 'rc4';
+
+        $key = $key->saveToAsciiSafeString();
+        $user = CompanyUser::create([
+            'username' => $request->username,
+            'email' => base64_encode(openssl_encrypt($request->email, $cipher, $key)),
+            'password' => base64_encode(openssl_encrypt($request->password, $cipher, $key)),
+        ]);
+
+        
+        $userkey = CompanyKey::create([
+            'company_user_id' => $user->id,
+            'key' => $key,
+        ]);
+
+        return $user;
+    }
+
+    public function UserEncryptedDES($request, $key)
+    {
+        $cipher = 'des-ecb';
+
+        $key = $key->saveToAsciiSafeString();
+        $user = CompanyUser::create([
+            'username' => $request->username,
+            'email' => base64_encode(openssl_encrypt($request->email, $cipher, $key, $options=0)),
+            'password' => base64_encode(openssl_encrypt($request->password, $cipher, $key, $options=0)),
+        ]);
+
+        
+        $userkey = CompanyKey::create([
+            'company_user_id' => $user->id,
+            'key' => $key,
+        ]);
+
+        return $user;
     }
 }

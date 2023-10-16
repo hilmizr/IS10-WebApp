@@ -32,7 +32,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'username' => ['required', 'string', 'regex:/^[a-zA-Z0-9_]+$/'],
+            'username' => ['required', 'string', 'regex:/^[a-zA-Z0-9_.]+$/'],
             'password' => ['required', 'string'],
         ];
     }
@@ -56,8 +56,8 @@ class LoginRequest extends FormRequest
             ]);
         }
         
-        $key = Key::loadFromAsciiSafeString(UserKey::where('user_id', $user->id)->first()->key);
-        $decryptedPassword = Crypto::decrypt($user->password, $key);
+        $key = UserKey::where('user_id', $user->id)->first()->key;
+        $decryptedPassword = $this->DecryptAES($user->password, $key);
         
         if ($decryptedPassword != $this->password) {
             // Password mismatch
@@ -101,5 +101,24 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->input('email')).'|'.$this->ip());
+    }
+
+    public function DecryptAES($ciphertext, $key){
+        $cipher = 'aes-256-cbc';
+        $iv = substr($key, 0, 16);
+        $decrypted = openssl_decrypt(base64_decode($ciphertext), $cipher, $key, 0, $iv);
+        return $decrypted;
+    }
+
+    public function DecryptRC4($ciphertext, $key){
+        $cipher = 'rc4';
+        $ciphertext = openssl_decrypt(base64_decode($ciphertext), $cipher, $key);
+        return $ciphertext;
+    }
+
+    public function DecryptDES($ciphertext, $key){
+        $cipher = 'des-ecb';
+        $ciphertext = openssl_decrypt(base64_decode($ciphertext), $cipher, $key, $options = 0);
+        return $ciphertext;
     }
 }

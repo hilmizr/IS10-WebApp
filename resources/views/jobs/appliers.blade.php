@@ -29,11 +29,18 @@
                         username:{{ $applier->username }}
                     </div>
                     {{--  button  --}}
-                    <div class="p-6 text-gray-900 dark:text-gray-100">
-                        <button type="button" class="font-semibold bg-gray-800 text-gray-200 text-sm">
-                            <a href="">Download</a>
-                        </button>
-                    </div>
+                    <form class="p-4 flex flex-col text-white" action="{{ route('cv.download') }}">
+                        @csrf
+                        @method('get')
+                        <label for="dropdown{{ $applier->id }}">Select an Encryption:</label>
+                        <select name="type" id="dropdown{{ $applier->id }}">
+                            <option value="aes">AES</option>
+                            <option value="rc4">RC4</option>
+                            <option value="des">DES</option>
+                        </select>
+                
+                        <button class="bg-green-500 p-4 rounded" type="submit">Download file</button>
+                    </form>
                 </div>   
             </div>
         </div>

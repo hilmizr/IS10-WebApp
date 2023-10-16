@@ -26,6 +26,7 @@ return new class extends Migration
             $table->text('university')->nullable();
             $table->text('major')->nullable();
             $table->text('resume_video')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
             
             
             $table->timestamps();

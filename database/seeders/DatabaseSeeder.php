@@ -22,5 +22,12 @@ class DatabaseSeeder extends Seeder
         //     'password' => Hash::make('test'),
         //     'username' => 'username'
         // ]);
+
+        $this->call([
+            UserSeeder::class,
+            CompanySeeder::class,
+            JobSeeder::class,
+            ApplySeeder::class,
+        ]);
     }
 }
