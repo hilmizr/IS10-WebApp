@@ -72,8 +72,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/idcard/download', [IDCardController::class, 'download'])->name('idcard.download');
 
     Route::get('/job', [JobController::class, 'index'])->name('job.index');
+
     Route::get('/video', [VideoController::class, 'index'])->name('video.index');
-    Route::post('/video', [VideoController::class, 'store'])->name('video.store');
+    Route::post('/video', [VideoController::class, 'store'])->name('video.upload');
     Route::get('/video/download', [VideoController::class, 'download'])->name('video.download');
     Route::get('/apply/{id}', [JobController::class, 'apply'])->name('apply-job');
 
