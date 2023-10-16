@@ -24,11 +24,11 @@
                         @csrf
                     </form>
 
-                    <form class="flex flex-col" method="post" action="{{ route('cv.upload') }}" class="mt-6 space-y-6" enctype="multipart/form-data">
+                    <form class="flex flex-col" method="post" action="{{ route('video.store') }}" class="mt-6 space-y-6" enctype="multipart/form-data">
                         @csrf
                         @method('post')
 
-                        <input type="file" name="document" class="mb-2">
+                        <input type="file" name="video" class="mb-2">
 
                         <label for="dropdown" class="mb-2">Select an Encryption:</label>
                         <select name="type" id="dropdown" class="mb-2">
@@ -46,7 +46,7 @@
                         {{ __("Download Resume Video") }}
                     </h2>
 
-                    <form class="flex flex-col text-white" action="{{ route('cv.download') }}">
+                    <form class="flex flex-col text-white" action="{{ route('video.download') }}">
                         @csrf
                         @method('get')
                         <button class="bg-green-500 p-4 rounded" type="submit">Download File</button>

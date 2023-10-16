@@ -57,7 +57,6 @@ class ProfileController extends Controller
         $request->user()->fill($request->validated());
 
         if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
             $request->user()->email = Crypto::encrypt($request->user()->email, Key::loadFromAsciiSafeString($request->user()->userKey->key));
         }
         if ($request->user()->isDirty('address')) {

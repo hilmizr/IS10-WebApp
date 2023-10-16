@@ -16,62 +16,65 @@ class VideoController extends Controller
 {
     public function index()
     {
-
         return view('video.index', ['title' => 'Form']);
     }
 
     public function store(Request $request)
     {
-        // Validasi
-        $validated = $request->validate([
-            'document' => 'required|mimes:doc,docx,pdf,xml|max:10000',
-        ]);
+        $this->validate($request, [
+           'video' => 'required|file|mimetypes:video/mp4',
+           'type' => 'required'
+        ]);   
 
-        // Proses upload file
-        $document = $request->file('document');
-        $documentName = $request->user()->username . '_cv.' . $document->extension();
-        $encdocumentName = $request->user()->username . '_cv_enc';
-        $path = $request->file('document')->storeAs(
-            'files',  $documentName
-        );
+        $request->user()->resume_video = $request->type;
+        $request->user()->save();
+
+        $path = $request->file('video')->storeAs('videos', "temp.mp4", 'public');
+
         Log::info($path);
         $key=Key::loadFromAsciiSafeString($request->user()->userKey->key);
-        //File::encryptFile(Storage::path($path) ,Storage::path('files/'.$encdocumentName), $key);
-        $this->encryptFileUsingAES(Storage::path($path) ,Storage::path('files/'.$encdocumentName.'_aes.pdf'), $request->user()->userKey->key );
-        $this->encryptFileUsingRC4(Storage::path($path) ,Storage::path('files/'.$encdocumentName.'_rc4.pdf'), $request->user()->userKey->key );
-        $this->encryptFileUsingDES(Storage::path($path) ,Storage::path('files/'.$encdocumentName.'_des.pdf'), $request->user()->userKey->key );
 
-        Storage::delete($path);
-        // Tampilkan flash message
-        session()->flash('success', 'Data berhasil disimpan');
-        return view('upload.uploadfile', ['data' => $validated, 'fileName' => $documentName, 'title' => 'Form Result']);
+        switch ($request->type) {
+            case 'aes':
+                $this->encryptFileUsingAES(Storage::path('public/videos/temp.mp4') ,Storage::path('files/'.$request->user()->username.'_video_aes.mp4'), $request->user()->userKey->key );
+
+            case 'rc4':
+                $this->encryptFileUsingAES(Storage::path('public/videos/temp.mp4') ,Storage::path('files/'.$request->user()->username.'_video_rc4.mp4'), $request->user()->userKey->key );
+            
+            case 'des':
+                $this->encryptFileUsingAES(Storage::path('public/videos/temp.mp4') ,Storage::path('files/'.$request->user()->username.'_video_des.mp4'), $request->user()->userKey->key );    
+        }
+
+        Storage::delete('public/videos/temp.mp4');
+
+        return redirect()->back()->with('success', 'Video uploaded successfully.');
     }
 
     public function download(Request $request)
     {
-        $validated = $request->validate([
-            'type' => 'required|string',
-        ]);
-        // Specify the path to the encrypted file
-        $encryptedFilePath = Storage::path('files/'.$request->user()->username . '_cv_enc_'.$request->type.'.pdf');
+        $type = $request->user()->resume_video;
+        
+        $encryptedFilePath = Storage::path('files/'.$request->user()->username . '_video_'.$type.'.mp4');
 
-        if (!Storage::exists('files/'.$request->user()->username . '_cv_enc_'.$request->type.'.pdf')){
+        dd($encryptedFilePath);
+
+        if (!Storage::exists($encryptedFilePath)){
             session()->flash('error', 'File tidak ditemukan');
             Log::info($encryptedFilePath);
             Log::info(!Storage::exists($encryptedFilePath));
 
-            return redirect()->route('cv.index');
+            return redirect()->route('video.index');
         }
 
         $key = Key::loadFromAsciiSafeString($request->user()->userKey->key);
 
+        $tempFilePath = Storage::path('public/videos/temp.mp4');
 
-        $tempFilePath = tempnam(sys_get_temp_dir(), 'decrypted_file');
-        //File::decryptFile($encryptedFilePath,$tempFilePath, $key);
-        switch ($request->type) {
+        
+
+        switch ($type) {
             case "aes":
                 $this->decryptFileUsingAES($encryptedFilePath,$tempFilePath,  $request->user()->userKey->key);
-
                 break;
             case "rc4":
                 $this->decryptFileUsingRC4($encryptedFilePath,$tempFilePath,  $request->user()->userKey->key);
@@ -83,10 +86,10 @@ class VideoController extends Controller
                 break;
             default:
                 //TODO: do some error handling here in case there is nothing provided
-                echo "aaaaaaaa";
+                break;
         }
 
-        return response()->download($tempFilePath, 'decrypted_'.$request->user()->username . '_cv_enc_'.$request->type.'.pdf')->deleteFileAfterSend(true);
+        return response()->download($tempFilePath, 'decrypted_'.$request->user()->username . '_video_'.$type.'.mp4')->deleteFileAfterSend(true);
     }
 
     public function encryptFileUsingAES( $sourcePath, $destinationPath,$key)

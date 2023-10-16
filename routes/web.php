@@ -34,6 +34,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/video', [VideoController::class, 'index'])->name('video.index');
+    Route::post('/video', [VideoController::class, 'store'])->name('video.store');
+    Route::get('/video/download', [VideoController::class, 'download'])->name('video.download');
 });
 
 require __DIR__ . '/auth.php';
