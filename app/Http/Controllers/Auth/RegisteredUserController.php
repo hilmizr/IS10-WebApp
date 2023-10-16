@@ -40,26 +40,75 @@ class RegisteredUserController extends Controller
         ]);
         // random generate 16 char string
         $key = Key::createNewRandomKey();
-        
-        $user = User::create([
-            'username' => $request->username,
-            'email' => Crypto::encrypt($request->email, $key),
-            'password' => Crypto::encrypt($request->password, $key),
-        ]);
 
-        $key = $key->saveToAsciiSafeString();
-        // print to consolez
-        
-        $userkey = UserKey::create([
-            'user_id' => $user->id,
-            'key' => $key,
-        ]);
-        // dd($key);
+        $user = $this->UserEncryptedAES($request, $key);
         
         event(new Registered($user));
 
         Auth::login($user);
 
         return redirect(RouteServiceProvider::HOME);
+    }
+
+    public function UserEncryptedAES($request, $key)
+    {
+        $cipher = 'aes-256-cbc';
+        
+        $key = $key->saveToAsciiSafeString();
+        $iv = substr($key, 0, 16);
+        $user = User::create([
+            'username' => $request->username,
+            'email' => base64_encode(openssl_encrypt($request->email, $cipher, $key, 0, $iv)),
+            'password' => base64_encode(openssl_encrypt($request->password, $cipher, $key, 0, $iv)),
+        ]);
+
+        
+        $userkey = UserKey::create([
+            'user_id' => $user->id,
+            'key' => $key,
+        ]);
+
+
+        return $user;
+    }
+
+    public function UserEncryptedRC4($request, $key)
+    {
+        $cipher = 'rc4';
+
+        $key = $key->saveToAsciiSafeString();
+        $user = User::create([
+            'username' => $request->username,
+            'email' => base64_encode(openssl_encrypt($request->email, $cipher, $key)),
+            'password' => base64_encode(openssl_encrypt($request->password, $cipher, $key)),
+        ]);
+
+        
+        $userkey = UserKey::create([
+            'user_id' => $user->id,
+            'key' => $key,
+        ]);
+
+        return $user;
+    }
+
+    public function UserEncryptedDES($request, $key)
+    {
+        $cipher = 'des-ecb';
+        
+        $key = $key->saveToAsciiSafeString();
+        $user = User::create([
+            'username' => $request->username,
+            'email' => base64_encode(openssl_encrypt($request->email, $cipher, $key, $options=0)),
+            'password' => base64_encode(openssl_encrypt($request->password, $cipher, $key, $options=0)),
+        ]);
+
+        
+        $userkey = UserKey::create([
+            'user_id' => $user->id,
+            'key' => $key,
+        ]);
+
+        return $user;
     }
 }

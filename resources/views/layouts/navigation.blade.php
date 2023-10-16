@@ -53,12 +53,12 @@
                         </x-nav-link>
                     @endif
                 </div>
-                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <x-nav-link :href="route('idcard.index')" :active="request()->routeIs('idcard.index')">
-                        {{ __('ID Card Upload') }}
-                    </x-nav-link>
-                </div>
                 @if (Auth::user() instanceof App\Models\User)
+                    <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                        <x-nav-link :href="route('idcard.index')" :active="request()->routeIs('idcard.index')">
+                            {{ __('ID Card Upload') }}
+                        </x-nav-link>
+                    </div>
                     <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                         <x-nav-link :href="route('cv.index')" :active="request()->routeIs('cv.index')">
                             {{ __('CV Upload') }}
