@@ -51,6 +51,7 @@ Route::middleware('company.auth')->group(function () {
     Route::post('/edit-job/{id}', [JobController::class, 'update']);
     Route::delete('/delete-job/{id}', [JobController::class, 'destroy'])->name('delete-job');
     Route::get('/appliers/{id}', [JobController::class, 'appliers'])->name('appliers');
+    Route::get('/document-download/{id}', [JobController::class, 'document_download'])->name('document-download');
 
 });
 

@@ -13,7 +13,7 @@ class JobController extends Controller
 {
     public function index()
     {
-        return view('jobs.index',[
+        return view('jobs.index', [
             'jobs' => Job::all()
         ]);
     }
@@ -30,7 +30,8 @@ class JobController extends Controller
         return view('jobs.create-form');
     }
 
-    public function store(Request $request){
+    public function store(Request $request)
+    {
         // dd(Auth::user()->id);
         $id = Auth::user()->id;
         $job = Job::create([
@@ -42,17 +43,18 @@ class JobController extends Controller
             'requirements' => $request->requirements,
         ]);
         return redirect()->route('company-job.index');
-
     }
 
-    public function edit($id){
+    public function edit($id)
+    {
         $job = Job::find($id);
         return view('jobs.edit-form', [
             'job' => $job
         ]);
     }
 
-    public function update(Request $request, $id){
+    public function update(Request $request, $id)
+    {
         $job = Job::find($id);
         $job->update([
             'title' => $request->title,
@@ -64,22 +66,24 @@ class JobController extends Controller
         return redirect()->route('company-job.index');
     }
 
-    public function destroy($id){
+    public function destroy($id)
+    {
         $job = Job::find($id);
         $job->delete();
         return redirect()->route('company-job.index');
     }
 
-    public function apply($id){
+    public function apply($id)
+    {
         $exist = DB::table('job_user')
             ->where('user_id', Auth::user()->id)
             ->where('job_id', $id)
             ->first();
-        
-        
-        if($exist  === null){
+
+
+        if ($exist  === null) {
             $job = Job::find($id);
-            
+
             DB::table('job_user')->insert([
                 'job_id' => $job->id,
                 'user_id' => Auth::user()->id,
@@ -89,29 +93,30 @@ class JobController extends Controller
         }
 
         return redirect()->route('job.index');
-
     }
 
-    public function appliers($id){
+    public function appliers($id)
+    {
 
         $appliers = DB::table('users')
             ->join('job_user', 'users.id', '=', 'job_user.user_id')
             ->where('job_user.job_id', $id)
             ->get();
-        
+
         return view('jobs.appliers', [
             'appliers' => $appliers
         ]);
-        
     }
 
-    public function document_download(Request $request, $id){
+    public function document_download(Request $request, $id)
+    {
+        // dd("document download hit");
         $document = $request->file('document');
         $validated = $request->validate([
             'type' => 'required|string',
         ]);
         // Specify the path to the encrypted file
-        
+
         $metadataPath = 'files/' . $request->user()->username . '_cv_enc_metadata.json';
         if (!Storage::exists($metadataPath)) {
             session()->flash('error', 'Metadata tidak ditemukan');
@@ -124,10 +129,10 @@ class JobController extends Controller
             session()->flash('error', 'File tidak ditemukan');
             Log::info($idcard_filepath);
             Log::info(!Storage::exists($idcard_filepath));
-            
+
             return back();
         }
-        
+
         $cv_filepath = Storage::path('files/' . $request->user()->username . '_cv_enc_' . $request->type . '.pdf');
         if (!Storage::exists('files/' . $request->user()->username . '_cv_enc_' . $request->type . '.pdf')) {
             session()->flash('error', 'File tidak ditemukan');
@@ -137,8 +142,8 @@ class JobController extends Controller
             return back();
         }
 
-        $video_filepath = Storage::path('files/' . $request->user()->username . '_video_' . $request->type . '.mp4');
-        if (!Storage::exists('files/' . $request->user()->username . '_video_' . $request->type . '.mp4')) {
+        $video_filepath = Storage::path('videos/' . $request->user()->username . '_video_' . $request->type . '.mp4');
+        if (!Storage::exists('videos/' . $request->user()->username . '_video_' . $request->type . '.mp4')) {
             session()->flash('error', 'File tidak ditemukan');
             Log::info($video_filepath);
             Log::info(!Storage::exists($video_filepath));
@@ -150,7 +155,7 @@ class JobController extends Controller
         $temp_cv_filepath = tempnam(sys_get_temp_dir(), 'decrypted_cv');
         $temp_video_filepath = tempnam(sys_get_temp_dir(), 'decrypted_video');
 
-        switch ($request->type){
+        switch ($request->type) {
             case "aes":
                 $this->decryptFileUsingAES($idcard_filepath, $temp_id_filepath, $request->user()->userKey->key);
                 $this->decryptFileUsingAES($cv_filepath, $temp_cv_filepath, $request->user()->userKey->key);
@@ -168,8 +173,8 @@ class JobController extends Controller
                 break;
             default:
                 echo "aaaaaaaa";
-
         }
+
         // zip 3 files
         $zip = new \ZipArchive();
         $zip->open(Storage::path('files/' . $request->user()->username . '_document.zip'), \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
@@ -185,41 +190,60 @@ class JobController extends Controller
 
         // download zip
         return response()->download(Storage::path('files/' . 'decrypted_' . $request->user()->username . '_document.zip'))->deleteFileAfterSend(true);
-
-
     }
 
     public function decryptFileUsingAES($sourcePath, $destinationPath, $key)
     {
         $cipher = 'aes-256-cbc';
-        $data = file_get_contents($sourcePath);
-        $iv = substr($data, 0, openssl_cipher_iv_length($cipher));
 
-        $data = substr($data, openssl_cipher_iv_length($cipher));
-        $decryptedData = openssl_decrypt($data, $cipher, $key, 0, $iv);
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
 
-        // Write the decrypted data to the destination file
-        file_put_contents($destinationPath, $decryptedData);
+        $iv = fread($inputFile, openssl_cipher_iv_length($cipher));
+
+        while (!feof($inputFile)) {
+            $ciphertext = fread($inputFile, 16 * 1024 + openssl_cipher_iv_length($cipher));
+            $plaintext = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+            fwrite($outputFile, $plaintext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
     }
 
     public function decryptFileUsingRC4($sourcePath, $destinationPath, $key)
     {
         $cipher = 'rc4';
 
-        $data = file_get_contents($sourcePath);
-        $decryptedData = openssl_decrypt($data, $cipher, $key);
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
 
-        file_put_contents($destinationPath, $decryptedData);
+        while (!feof($inputFile)) {
+            $ciphertext = fread($inputFile, 16 * 1024);
+            $plaintext = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA);
+            fwrite($outputFile, $plaintext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
     }
 
     public function decryptFileUsingDES($sourcePath, $destinationPath, $key)
     {
-        $cipher = 'des-ecb';
+        $cipher = 'des-cbc';
 
-        $data = file_get_contents($sourcePath);
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
 
-        $decryptedData = openssl_decrypt($data, $cipher, $key, $options = 0);
+        $iv = fread($inputFile, openssl_cipher_iv_length($cipher));
 
-        file_put_contents($destinationPath, $decryptedData);
+        while (!feof($inputFile)) {
+            $ciphertext = fread($inputFile, 8 * 1024 + openssl_cipher_iv_length($cipher));
+            $plaintext = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+            fwrite($outputFile, $plaintext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
     }
 }
