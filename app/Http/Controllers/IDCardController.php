@@ -113,65 +113,114 @@ class IDCardController extends Controller
     {
         $cipher = 'aes-256-cbc';
         $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($cipher));
-        $data = file_get_contents($sourcePath);
-        $encryptedData = openssl_encrypt($data, $cipher, $key, 0, $iv);
 
-        // Write the encrypted data to the destination file
-        file_put_contents($destinationPath, $iv . $encryptedData);
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
+
+        // Write the IV to the output file first
+        fwrite($outputFile, $iv);
+
+        while (!feof($inputFile)) {
+            $plaintext = fread($inputFile, 16 * 1024);
+            $ciphertext = openssl_encrypt($plaintext, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+            fwrite($outputFile, $ciphertext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
     }
 
     public function decryptFileUsingAES($sourcePath, $destinationPath, $key)
     {
         $cipher = 'aes-256-cbc';
-        $data = file_get_contents($sourcePath);
-        $iv = substr($data, 0, openssl_cipher_iv_length($cipher));
 
-        $data = substr($data, openssl_cipher_iv_length($cipher));
-        $decryptedData = openssl_decrypt($data, $cipher, $key, 0, $iv);
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
 
-        // Write the decrypted data to the destination file
-        file_put_contents($destinationPath, $decryptedData);
+        // Read the IV from the input file first
+        $iv = fread($inputFile, openssl_cipher_iv_length($cipher));
+
+        while (!feof($inputFile)) {
+            $ciphertext = fread($inputFile, 16 * 1024 + openssl_cipher_iv_length($cipher));
+            $plaintext = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+            fwrite($outputFile, $plaintext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
     }
+
     public function encryptFileUsingRC4($sourcePath, $destinationPath, $key)
     {
         $cipher = 'rc4';
 
-        $data = file_get_contents($sourcePath);
-        $encryptedData = openssl_encrypt($data, $cipher, $key);
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
 
-        // Write the encrypted data to the destination file
-        file_put_contents($destinationPath, $encryptedData);
+        while (!feof($inputFile)) {
+            $plaintext = fread($inputFile, 16 * 1024);
+            $ciphertext = openssl_encrypt($plaintext, $cipher, $key, OPENSSL_RAW_DATA);
+            fwrite($outputFile, $ciphertext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
     }
 
     public function decryptFileUsingRC4($sourcePath, $destinationPath, $key)
     {
         $cipher = 'rc4';
 
-        $data = file_get_contents($sourcePath);
-        $decryptedData = openssl_decrypt($data, $cipher, $key);
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
 
-        file_put_contents($destinationPath, $decryptedData);
+        while (!feof($inputFile)) {
+            $ciphertext = fread($inputFile, 16 * 1024);
+            $plaintext = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA);
+            fwrite($outputFile, $plaintext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
     }
 
     public function encryptFileUsingDES($sourcePath, $destinationPath, $key)
     {
-        $cipher = 'des-ecb';
+        $cipher = 'des-cbc';
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($cipher));
 
-        $data = file_get_contents($sourcePath);
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
 
-        $encryptedData = openssl_encrypt($data, $cipher, $key, $options = 0);
+        // Write the IV to the output file first
+        fwrite($outputFile, $iv);
 
-        file_put_contents($destinationPath, $encryptedData);
+        while (!feof($inputFile)) {
+            $plaintext = fread($inputFile, 8 * 1024);
+            $ciphertext = openssl_encrypt($plaintext, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+            fwrite($outputFile, $ciphertext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
     }
 
     public function decryptFileUsingDES($sourcePath, $destinationPath, $key)
     {
-        $cipher = 'des-ecb';
+        $cipher = 'des-cbc';
 
-        $data = file_get_contents($sourcePath);
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
 
-        $decryptedData = openssl_decrypt($data, $cipher, $key, $options = 0);
+        $iv = fread($inputFile, openssl_cipher_iv_length($cipher));
 
-        file_put_contents($destinationPath, $decryptedData);
+        while (!feof($inputFile)) {
+            $ciphertext = fread($inputFile, 8 * 1024 + openssl_cipher_iv_length($cipher));
+            $plaintext = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+            fwrite($outputFile, $plaintext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
     }
 }
