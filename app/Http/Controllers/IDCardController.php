@@ -117,7 +117,6 @@ class IDCardController extends Controller
         $inputFile = fopen($sourcePath, 'rb');
         $outputFile = fopen($destinationPath, 'wb');
 
-        // Write the IV to the output file first
         fwrite($outputFile, $iv);
 
         while (!feof($inputFile)) {
@@ -137,7 +136,6 @@ class IDCardController extends Controller
         $inputFile = fopen($sourcePath, 'rb');
         $outputFile = fopen($destinationPath, 'wb');
 
-        // Read the IV from the input file first
         $iv = fread($inputFile, openssl_cipher_iv_length($cipher));
 
         while (!feof($inputFile)) {
@@ -192,7 +190,6 @@ class IDCardController extends Controller
         $inputFile = fopen($sourcePath, 'rb');
         $outputFile = fopen($destinationPath, 'wb');
 
-        // Write the IV to the output file first
         fwrite($outputFile, $iv);
 
         while (!feof($inputFile)) {

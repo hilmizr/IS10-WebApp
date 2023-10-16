@@ -114,7 +114,6 @@ class VideoController extends Controller
         $inputFile = fopen($sourcePath, 'rb');
         $outputFile = fopen($destinationPath, 'wb');
 
-        // Write the IV to the output file first
         fwrite($outputFile, $iv);
 
         while (!feof($inputFile)) {
@@ -127,7 +126,6 @@ class VideoController extends Controller
         fclose($outputFile);
     }
 
-
     public function decryptFileUsingAES($sourcePath, $destinationPath, $key)
     {
         $cipher = 'aes-256-cbc';
@@ -135,7 +133,6 @@ class VideoController extends Controller
         $inputFile = fopen($sourcePath, 'rb');
         $outputFile = fopen($destinationPath, 'wb');
 
-        // Read the IV from the input file first
         $iv = fread($inputFile, openssl_cipher_iv_length($cipher));
 
         while (!feof($inputFile)) {
@@ -165,7 +162,6 @@ class VideoController extends Controller
         fclose($outputFile);
     }
 
-
     public function decryptFileUsingRC4($sourcePath, $destinationPath, $key)
     {
         $cipher = 'rc4';
@@ -191,7 +187,6 @@ class VideoController extends Controller
         $inputFile = fopen($sourcePath, 'rb');
         $outputFile = fopen($destinationPath, 'wb');
 
-        // Write the IV to the output file first
         fwrite($outputFile, $iv);
 
         while (!feof($inputFile)) {

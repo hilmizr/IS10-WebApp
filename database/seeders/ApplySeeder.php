@@ -14,15 +14,26 @@ class ApplySeeder extends Seeder
     public function run(): void
     {
         $applies = [];
-        for ($i = 0; $i < 100; $i++) {
-            $applies[] = [
-                'user_id' => \App\Models\User::all()->random()->id,
-                'job_id' => \App\Models\Job::all()->random()->id,
-            ];
-        }
+        $uniqueCombinations = []; // To keep track of unique combinations
 
         for ($i = 0; $i < 100; $i++) {
-            DB::table('job_user')->insert($applies[$i]);
+            $userId = \App\Models\User::all()->random()->id;
+            $jobId = \App\Models\Job::all()->random()->id;
+            $combination = "{$userId}-{$jobId}";
+
+            // Check if combination is already generated
+            while (in_array($combination, $uniqueCombinations)) {
+                $userId = \App\Models\User::all()->random()->id;
+                $jobId = \App\Models\Job::all()->random()->id;
+                $combination = "{$userId}-{$jobId}";
+            }
+
+            $uniqueCombinations[] = $combination;
+
+            $applies[] = [
+                'user_id' => $userId,
+                'job_id' => $jobId,
+            ];
         }
     }
 }
