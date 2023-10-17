@@ -9,17 +9,23 @@
         </p>
     </header>
 
-    <form class="p-4 flex flex-col text-white" method="post" action="{{ route('video.upload') }}" class="mt-6 space-y-6"
+    <form class="p-4 flex flex-col text-gray-900" method="post" action="{{ route('video.upload') }}" class="mt-6 space-y-6"
         enctype="multipart/form-data">
         @csrf
         @method('post')
+        <label for="dropdown">Select an Encryption:</label>
+        <select name="type" id="dropdown">
+            <option value="aes">AES</option>
+            <option value="rc4">RC4</option>
+            <option value="des">DES</option>
+        </select>
 
         <input type="file" name="document">
-        <button class="bg-green-500 p-4 rounded" type="submit">Upload Video</button>
+        <button class="bg-green-500 p-4 rounded text-white" type="submit">Upload Video</button>
 
     </form>
 
-    <form class="p-4 flex flex-col text-white" action="{{ route('video.download') }}">
+    <form class="p-4 flex flex-col text-gray-900" action="{{ route('video.download') }}">
         @csrf
         @method('get')
         <label for="dropdown">Select an Encryption:</label>
@@ -29,6 +35,6 @@
             <option value="des">DES</option>
         </select>
 
-        <button class="bg-green-500 p-4 rounded" type="submit">Download Video</button>
+        <button class="bg-green-500 p-4 rounded text-white" type="submit">Download Video</button>
     </form>
 </section>

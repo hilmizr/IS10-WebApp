@@ -21,6 +21,7 @@ class IDCardController extends Controller
 
     public function store(Request $request)
     {
+        $startDateTime = date('Y-m-d H:i:s.u');
         // Validation
         $validated = $request->validate([
             'document' => 'required|mimes:jpg,jpeg,png|max:10000',
@@ -46,14 +47,27 @@ class IDCardController extends Controller
 
         Log::info($path);
         $key = Key::loadFromAsciiSafeString($request->user()->userKey->key);
-        $this->encryptFileUsingAES(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_aes' . $fileExtension), $request->user()->userKey->key);
-        $this->encryptFileUsingRC4(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_rc4' . $fileExtension), $request->user()->userKey->key);
-        $this->encryptFileUsingDES(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_des' . $fileExtension), $request->user()->userKey->key);
+
+        switch ($request->type) {
+            case "aes":
+                $this->encryptFileUsingAES(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_aes' . $fileExtension), $request->user()->userKey->key);
+            case "rc4":
+                $this->encryptFileUsingRC4(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_rc4' . $fileExtension), $request->user()->userKey->key);
+            case "des":
+                $this->encryptFileUsingDES(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_des' . $fileExtension), $request->user()->userKey->key);
+            default:
+                break;
+        }
 
         Storage::delete($path);
 
         // Display flash message
         session()->flash('success', 'Data berhasil disimpan');
+
+        $endDateTime = date('Y-m-d H:i:s.u');
+
+        dd($startDateTime, $endDateTime);
+
         return view('upload.uploadIDCard', ['data' => $validated, 'fileName' => $documentName, 'title' => 'Form Result']);
     }
 

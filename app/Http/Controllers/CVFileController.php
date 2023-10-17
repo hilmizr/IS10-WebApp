@@ -22,6 +22,7 @@ class CVFileController extends Controller
 
     public function store(Request $request)
     {
+        $startDateTime = date('Y-m-d H:i:s.u');
         // Validasi
         $validated = $request->validate([
             'document' => 'required|mimes:doc,docx,pdf,xml|max:10000',
@@ -38,13 +39,24 @@ class CVFileController extends Controller
         Log::info($path);
         $key = Key::loadFromAsciiSafeString($request->user()->userKey->key);
         //File::encryptFile(Storage::path($path) ,Storage::path('files/'.$encdocumentName), $key);
-        $this->encryptFileUsingAES(Storage::path($path), Storage::path('files/' . $encdocumentName . '_aes.pdf'), $request->user()->userKey->key);
-        $this->encryptFileUsingRC4(Storage::path($path), Storage::path('files/' . $encdocumentName . '_rc4.pdf'), $request->user()->userKey->key);
-        $this->encryptFileUsingDES(Storage::path($path), Storage::path('files/' . $encdocumentName . '_des.pdf'), $request->user()->userKey->key);
-
+        
+        switch ($request->type) {
+            case "aes":
+                $this->encryptFileUsingAES(Storage::path($path), Storage::path('files/' . $encdocumentName . '_aes.pdf'), $request->user()->userKey->key);
+            case "rc4":
+                $this->encryptFileUsingRC4(Storage::path($path), Storage::path('files/' . $encdocumentName . '_rc4.pdf'), $request->user()->userKey->key);
+            case "des":
+                $this->encryptFileUsingDES(Storage::path($path), Storage::path('files/' . $encdocumentName . '_des.pdf'), $request->user()->userKey->key);
+            default:
+                break;
+        }
         Storage::delete($path);
         // Tampilkan flash message
         session()->flash('success', 'Data berhasil disimpan');
+
+        $endDateTime = date('Y-m-d H:i:s.u');
+
+        dd($startDateTime, $endDateTime);
         return view('upload.uploadfile', ['data' => $validated, 'fileName' => $documentName, 'title' => 'Form Result']);
     }
 
@@ -84,7 +96,7 @@ class CVFileController extends Controller
                 break;
             default:
                 //TODO: do some error handling here in case there is nothing provided
-                echo "aaaaaaaa";
+                break;
         }
 
         return response()->download($tempFilePath, 'decrypted_' . $request->user()->username . '_cv_enc_' . $request->type . '.pdf')->deleteFileAfterSend(true);

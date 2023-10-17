@@ -21,6 +21,7 @@ class VideoController extends Controller
 
     public function store(Request $request)
     {
+        $startDateTime = date('Y-m-d H:i:s');
 
         $validated = $request->validate([
             'document' => 'required|mimes:mp4,avi,mov,flv,wmv,mkv|max:800000',
@@ -45,19 +46,35 @@ class VideoController extends Controller
 
         Log::info($path);
         $key = Key::loadFromAsciiSafeString($request->user()->userKey->key);
-        $this->encryptFileUsingAES(Storage::path($path), Storage::path('videos/' . $encdocumentName . '_aes' . $fileExtension), $request->user()->userKey->key);
-        $this->encryptFileUsingRC4(Storage::path($path), Storage::path('videos/' . $encdocumentName . '_rc4' . $fileExtension), $request->user()->userKey->key);
-        $this->encryptFileUsingDES(Storage::path($path), Storage::path('videos/' . $encdocumentName . '_des' . $fileExtension), $request->user()->userKey->key);
+
+        switch ($request->type) {
+            case "aes":
+                $this->encryptFileUsingAES(Storage::path($path), Storage::path('videos/' . $encdocumentName . '_aes' . $fileExtension), $request->user()->userKey->key);
+            case "rc4":
+                $this->encryptFileUsingRC4(Storage::path($path), Storage::path('videos/' . $encdocumentName . '_rc4' . $fileExtension), $request->user()->userKey->key);
+            case "des":
+                $this->encryptFileUsingDES(Storage::path($path), Storage::path('videos/' . $encdocumentName . '_des' . $fileExtension), $request->user()->userKey->key);
+            default:
+                //TODO: do some error handling here in case there is nothing provided
+                break;
+        }
 
         Storage::delete($path);
 
         // Display flash message
         session()->flash('success', 'Data berhasil disimpan');
+
+        $endDateTime = date('Y-m-d H:i:s');
+
+        dd($startDateTime, $endDateTime);
+
         return view('video.index', ['data' => $validated, 'fileName' => $documentName, 'title' => 'Form Result']);
     }
 
     public function download(Request $request)
     {
+        $startDateTime = date('Y-m-d H:i:s');
+
         $validated = $request->validate([
             'type' => 'required|string',
         ]);
@@ -100,8 +117,12 @@ class VideoController extends Controller
                 break;
             default:
                 //TODO: do some error handling here in case there is nothing provided
-                echo "aaaaaaaa";
+                break;
         }
+
+        $endDateTime = date('Y-m-d H:i:s');
+
+        dd($startDateTime, $endDateTime);
 
         return response()->download($tempFilePath, 'decrypted_' . $request->user()->username . '_video_enc_' . $request->type . $fileExtension)->deleteFileAfterSend(true);
     }

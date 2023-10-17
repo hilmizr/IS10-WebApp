@@ -177,7 +177,7 @@ class JobController extends Controller
                 $this->decryptFileUsingDES($video_filepath, $temp_video_filepath, $user->userKey->key);
                 break;
             default:
-                echo "aaaaaaaa";
+                break;
         }
 
         // zip 3 files

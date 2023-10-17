@@ -15,7 +15,6 @@ class CompanyProfileController extends Controller
 {
     public function edit(Request $request): View
     {
-        // dd($request->user());
         $request->user()->email = $this->DecryptAES($request->user()->email, $request->user()->companyKey->key);
         if ($request->user()->address != null){
             $request->user()->address = $this->DecryptAES($request->user()->address, $request->user()->companyKey->key);
