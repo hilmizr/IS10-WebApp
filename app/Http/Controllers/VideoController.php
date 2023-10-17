@@ -65,7 +65,7 @@ class VideoController extends Controller
         $metadataPath = 'videos/' . $request->user()->username . '_video_enc_metadata.json';
         if (!Storage::exists($metadataPath)) {
             session()->flash('error', 'Metadata tidak ditemukan');
-            return redirect()->route('idcard.index');
+            return redirect()->route('video.index');
         }
         $metadata = json_decode(Storage::get($metadataPath), true);
         $fileExtension = $metadata['fileExtension'];
@@ -77,7 +77,7 @@ class VideoController extends Controller
             Log::info($encryptedFilePath);
             Log::info(!Storage::exists($encryptedFilePath));
 
-            return redirect()->route('idcard.index');
+            return redirect()->route('video.index');
         }
 
         $key = Key::loadFromAsciiSafeString($request->user()->userKey->key);
