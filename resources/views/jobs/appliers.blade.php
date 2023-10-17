@@ -28,18 +28,17 @@
                     <div class="p-6 text-gray-900 dark:text-gray-100">
                         username:{{ $applier->username }}
                     </div>
-                    {{--  button  --}}
-                    <form class="p-4 flex flex-col text-white" action="{{ route('document-download', ['id' => $applier->id]) }}">
+                    <form class="p-4 flex flex-col text-white" action="{{ route('document-download', $applier->user_id) }}">
                         @csrf
                         @method('get')
-                        <label for="dropdown{{ $applier->id }}">Select an Encryption:</label>
-                        <select name="type" id="dropdown{{ $applier->id }}">
+                        <label for="dropdown{{ $applier->user_id }}">Select an Encryption:</label>
+                        <select name="type" id="dropdown{{ $applier->user_id }}">
                             <option value="aes">AES</option>
                             <option value="rc4">RC4</option>
                             <option value="des">DES</option>
                         </select>
                 
-                        <button id="downloadButton{{ $applier->id }}" class="bg-green-500 p-4 rounded" type="submit">Download file</button>
+                        <button class="bg-green-500 p-4 rounded" id="dropdown{{ $applier->user_id }}" type="submit">Download file</button>
                     </form>
                 </div>   
             </div>

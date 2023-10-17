@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -111,21 +112,17 @@ class JobController extends Controller
     public function document_download(Request $request, $id)
     {
         // dd("document download hit");
-        $document = $request->file('document');
-        $validated = $request->validate([
-            'type' => 'required|string',
-        ]);
         // Specify the path to the encrypted file
-
-        $metadataPath = 'files/' . $request->user()->username . '_cv_enc_metadata.json';
+        $user = User::find($id);
+        $metadataPath = 'idcards/' . $user->username . '_idcard_enc_metadata.json';
         if (!Storage::exists($metadataPath)) {
             session()->flash('error', 'Metadata tidak ditemukan');
             return back();
         }
         $metadata = json_decode(Storage::get($metadataPath), true);
-        $fileExtension = $metadata['fileExtension'];
-        $idcard_filepath = Storage::path('idcards/' . $request->user()->username . '_idcard_enc_' . $request->type . $fileExtension);
-        if (!Storage::exists($idcard_filepath)) {
+        $pictureExtension = $metadata['fileExtension'];
+        $idcard_filepath = Storage::path('idcards/' . $user->username . '_idcard_enc_' . $request->type . $pictureExtension);
+        if (!Storage::exists('idcards/' . $user->username . '_idcard_enc_' . $request->type . $pictureExtension)) {
             session()->flash('error', 'File tidak ditemukan');
             Log::info($idcard_filepath);
             Log::info(!Storage::exists($idcard_filepath));
@@ -133,8 +130,8 @@ class JobController extends Controller
             return back();
         }
 
-        $cv_filepath = Storage::path('files/' . $request->user()->username . '_cv_enc_' . $request->type . '.pdf');
-        if (!Storage::exists('files/' . $request->user()->username . '_cv_enc_' . $request->type . '.pdf')) {
+        $cv_filepath = Storage::path('files/' . $user->username . '_cv_enc_' . $request->type . '.pdf');
+        if (!Storage::exists('files/' . $user->username . '_cv_enc_' . $request->type . '.pdf')) {
             session()->flash('error', 'File tidak ditemukan');
             Log::info($cv_filepath);
             Log::info(!Storage::exists($cv_filepath));
@@ -142,8 +139,16 @@ class JobController extends Controller
             return back();
         }
 
-        $video_filepath = Storage::path('videos/' . $request->user()->username . '_video_' . $request->type . '.mp4');
-        if (!Storage::exists('videos/' . $request->user()->username . '_video_' . $request->type . '.mp4')) {
+        $metadataPath = 'videos/' . $user->username . '_video_enc_metadata.json';
+        if (!Storage::exists($metadataPath)) {
+            session()->flash('error', 'Metadata tidak ditemukan');
+            return back();
+        }
+        $metadata = json_decode(Storage::get($metadataPath), true);
+        $fileExtension = $metadata['fileExtension'];
+        $video_filepath = Storage::path('videos/' . $user->username . '_video_enc_' . $request->type . $fileExtension);
+
+        if (!Storage::exists('videos/' . $user->username . '_video_enc_' . $request->type . $fileExtension)) {
             session()->flash('error', 'File tidak ditemukan');
             Log::info($video_filepath);
             Log::info(!Storage::exists($video_filepath));
@@ -157,19 +162,19 @@ class JobController extends Controller
 
         switch ($request->type) {
             case "aes":
-                $this->decryptFileUsingAES($idcard_filepath, $temp_id_filepath, $request->user()->userKey->key);
-                $this->decryptFileUsingAES($cv_filepath, $temp_cv_filepath, $request->user()->userKey->key);
-                $this->decryptFileUsingAES($video_filepath, $temp_video_filepath, $request->user()->userKey->key);
+                $this->decryptFileUsingAES($idcard_filepath, $temp_id_filepath, $user->userKey->key);
+                $this->decryptFileUsingAES($cv_filepath, $temp_cv_filepath, $user->userKey->key);
+                $this->decryptFileUsingAES($video_filepath, $temp_video_filepath, $user->userKey->key);
                 break;
             case "rc4":
-                $this->decryptFileUsingRC4($idcard_filepath, $temp_id_filepath, $request->user()->userKey->key);
-                $this->decryptFileUsingRC4($cv_filepath, $temp_cv_filepath, $request->user()->userKey->key);
-                $this->decryptFileUsingRC4($video_filepath, $temp_video_filepath, $request->user()->userKey->key);
+                $this->decryptFileUsingRC4($idcard_filepath, $temp_id_filepath, $user->userKey->key);
+                $this->decryptFileUsingRC4($cv_filepath, $temp_cv_filepath, $user->userKey->key);
+                $this->decryptFileUsingRC4($video_filepath, $temp_video_filepath, $user->userKey->key);
                 break;
             case "des":
-                $this->decryptFileUsingDES($idcard_filepath, $temp_id_filepath, $request->user()->userKey->key);
-                $this->decryptFileUsingDES($cv_filepath, $temp_cv_filepath, $request->user()->userKey->key);
-                $this->decryptFileUsingDES($video_filepath, $temp_video_filepath, $request->user()->userKey->key);
+                $this->decryptFileUsingDES($idcard_filepath, $temp_id_filepath, $user->userKey->key);
+                $this->decryptFileUsingDES($cv_filepath, $temp_cv_filepath, $user->userKey->key);
+                $this->decryptFileUsingDES($video_filepath, $temp_video_filepath, $user->userKey->key);
                 break;
             default:
                 echo "aaaaaaaa";
@@ -177,10 +182,10 @@ class JobController extends Controller
 
         // zip 3 files
         $zip = new \ZipArchive();
-        $zip->open(Storage::path('files/' . $request->user()->username . '_document.zip'), \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-        $zip->addFile($temp_id_filepath, 'idcard' . $fileExtension);
+        $zip->open(Storage::path('files/' . 'decrypted_' . $user->username . '_document.zip'), \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFile($temp_id_filepath, 'idcard' . $pictureExtension);
         $zip->addFile($temp_cv_filepath, 'cv.pdf');
-        $zip->addFile($temp_video_filepath, 'video.mp4');
+        $zip->addFile($temp_video_filepath, 'video' . $fileExtension);
         $zip->close();
 
         // delete temp files
@@ -189,7 +194,7 @@ class JobController extends Controller
         unlink($temp_video_filepath);
 
         // download zip
-        return response()->download(Storage::path('files/' . 'decrypted_' . $request->user()->username . '_document.zip'))->deleteFileAfterSend(true);
+        return response()->download(Storage::path('files/' . 'decrypted_' . $user->username . '_document.zip'))->deleteFileAfterSend(true);
     }
 
     public function decryptFileUsingAES($sourcePath, $destinationPath, $key)
