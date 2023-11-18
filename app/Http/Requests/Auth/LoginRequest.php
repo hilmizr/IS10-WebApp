@@ -57,7 +57,7 @@ class LoginRequest extends FormRequest
         }
         
         $key = UserKey::where('user_id', $user->id)->first()->key;
-        $decryptedPassword = $this->DecryptAES($user->password, $key);
+        $decryptedPassword = $this->DecryptRC4($user->password, $key);
         
         if ($decryptedPassword != $this->password) {
             // Password mismatch

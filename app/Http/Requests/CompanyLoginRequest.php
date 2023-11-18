@@ -50,7 +50,7 @@ class CompanyLoginRequest extends FormRequest
         }
         
         $key = CompanyKey::where('company_user_id', $user->id)->first()->key;
-        $decryptedPassword = $this->DecryptAES($user->password, $key);
+        $decryptedPassword = $this->DecryptRC4($user->password, $key);
 
         if ($decryptedPassword != $this->password) {
             // Password mismatch

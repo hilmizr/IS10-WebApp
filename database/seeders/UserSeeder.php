@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use Defuse\Crypto\Key;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use phpseclib\Crypt\RSA as Crypt_RSA;
+use Bytesfield\KeyManager\Facades\KeyManager;
 
 class UserSeeder extends Seeder
 {
@@ -19,17 +21,17 @@ class UserSeeder extends Seeder
             $keys[] = Key::createNewRandomKey()->saveToAsciiSafeString();
             $users[] = [
                 'username' => fake()->unique()->userName(),
-                'password' => $this->EncryptAES('123123123', $keys[$i]),
-                'name' => $this->EncryptAES(fake()->name(), $keys[$i]),
-                'id_number' => $this->EncryptAES(fake()->randomNumber(), $keys[$i]),
-                'student_id_number' => $this->EncryptAES(fake()->randomNumber(), $keys[$i]),
-                'date_of_birth' => $this->EncryptAES(fake()->date(), $keys[$i]),
-                'address' => $this->EncryptAES(fake()->address(), $keys[$i]),
-                'phone' => $this->EncryptAES(fake()->phoneNumber(), $keys[$i]),
-                'university' => $this->EncryptAES(fake()->company(), $keys[$i]),
-                'major' => $this->EncryptAES(fake()->jobTitle(), $keys[$i]),
+                'password' => $this->EncryptRC4('123123123', $keys[$i]),
+                'name' => $this->EncryptRC4(fake()->name(), $keys[$i]),
+                'id_number' => $this->EncryptRC4(fake()->randomNumber(), $keys[$i]),
+                'student_id_number' => $this->EncryptRC4(fake()->randomNumber(), $keys[$i]),
+                'date_of_birth' => $this->EncryptRC4(fake()->date(), $keys[$i]),
+                'address' => $this->EncryptRC4(fake()->address(), $keys[$i]),
+                'phone' => $this->EncryptRC4(fake()->phoneNumber(), $keys[$i]),
+                'university' => $this->EncryptRC4(fake()->company(), $keys[$i]),
+                'major' => $this->EncryptRC4(fake()->jobTitle(), $keys[$i]),
                 'resume_video' => null,
-                'email' => $this->EncryptAES(fake()->unique()->safeEmail(), $keys[$i]),
+                'email' => $this->EncryptRC4(fake()->unique()->safeEmail(), $keys[$i]),
                 'email_verified_at' => null,
             ];
         }
@@ -41,6 +43,7 @@ class UserSeeder extends Seeder
                 'user_id' => $user->id,
                 'key' => $key,
             ]);
+            KeyManager::createClient($user->username, 'user', 'active');
         }
     }
 

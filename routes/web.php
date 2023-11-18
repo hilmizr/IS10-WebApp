@@ -13,6 +13,7 @@ use Faker\Provider\ar_EG\Company;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\IDCardController;
+use App\Http\Controllers\RequestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,6 +79,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/video', [VideoController::class, 'store'])->name('video.upload');
     Route::get('/video/download', [VideoController::class, 'download'])->name('video.download');
     Route::get('/apply/{id}', [JobController::class, 'apply'])->name('apply-job');
+
+    Route::get('/request', [RequestController::class, 'index'])->name('request.index');
+    // Route::post('/request', [RequestController::class, 'index'])->name('request.index');
 
 });
 
