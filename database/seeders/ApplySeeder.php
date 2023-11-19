@@ -35,5 +35,16 @@ class ApplySeeder extends Seeder
                 'job_id' => $jobId,
             ];
         }
+
+        for ($i = 0; $i < 100; $i++) {
+            if (isset($applies[$i])) {
+                DB::table('job_user')->insert([
+                    'job_id' => $applies[$i]['job_id'],
+                    'user_id' => $applies[$i]['user_id'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
     }
 }
