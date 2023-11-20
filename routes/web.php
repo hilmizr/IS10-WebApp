@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\IDCardController;
 use App\Http\Controllers\RequestController;
+use App\Http\Controllers\RequestMessageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,6 +83,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/request', [RequestController::class, 'index'])->name('request.index');
     // Route::post('/request', [RequestController::class, 'index'])->name('request.index');
+
+    Route::post('/request-id-card', [RequestMessageController::class, 'sendRequest'])->middleware('auth');
+
 
 });
 
