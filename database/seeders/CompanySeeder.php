@@ -5,7 +5,11 @@ namespace Database\Seeders;
 use Defuse\Crypto\Key;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use phpseclib3\Crypt\RSA;
 use Bytesfield\KeyManager\Facades\KeyManager;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class CompanySeeder extends Seeder
 {
@@ -37,6 +41,22 @@ class CompanySeeder extends Seeder
                 'key' => $key,
             ]);
             KeyManager::createClient($user->username, 'user', 'active');
+            $privateKey = RSA::createKey(2048)
+                            ->withHash('sha256')
+                            ->withMGFHash('sha256');
+            $publicKey = $privateKey->getPublicKey();
+            Storage::put('keys/' . $user->username . '.pub', $publicKey->toString('PKCS1'));
+            Storage::put('keys/' . $user->username . '.pem', $privateKey->toString('PKCS1'));
+            // file_put_contents(storage_path('app/keys/' . $user->username . '.pub'), $publicKey->toString('PKCS1'));
+            // file_put_contents(storage_path('app/keys/' . $user->username . '.pem'), $privateKey->toString('PKCS1'));
+            DB::table('key_api_credentials')
+                ->join('key_clients', 'key_api_credentials.key_client_id','=', 'key_clients.id')
+                ->join('company_users', 'key_clients.name', '=', 'company_users.username')
+                ->where('company_users.username', '=', $user->username)
+                ->update([
+                    'public_key' => $publicKey,
+                    'private_key' => $privateKey,
+                ]);
         }
     }
 

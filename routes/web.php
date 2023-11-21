@@ -54,9 +54,11 @@ Route::middleware('company.auth')->group(function () {
     Route::delete('/delete-job/{id}', [JobController::class, 'destroy'])->name('delete-job');
     Route::get('/appliers/{id}', [JobController::class, 'appliers'])->name('appliers');
     Route::get('/document-download/{id}', [JobController::class, 'document_download'])->name('document-download');
-
+    Route::get('/company-inbox', [RequestController::class, 'company_index'])->name('company-inbox.index');
+    
 });
-
+Route::post('/request-id-card', [RequestMessageController::class, 'sendRequest']);
+Route::post('/set-sym-key', [RequestMessageController::class, 'setSymKey']);
 // Route::get('/dashboard', function () {
 //     return view('dashboard');
 // })->middleware(['auth', 'company.auth'])->name('dashboard');
@@ -80,12 +82,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/video', [VideoController::class, 'store'])->name('video.upload');
     Route::get('/video/download', [VideoController::class, 'download'])->name('video.download');
     Route::get('/apply/{id}', [JobController::class, 'apply'])->name('apply-job');
+    Route::post('/user-request-id-card', [RequestMessageController::class, 'sendUserRequest']);
 
-    Route::get('/request', [RequestController::class, 'index'])->name('request.index');
+    Route::get('/inbox', [RequestController::class, 'user_index'])->name('inbox.index');
+
     // Route::post('/request', [RequestController::class, 'index'])->name('request.index');
 
-    Route::post('/request-id-card', [RequestMessageController::class, 'sendRequest'])->middleware('auth');
-
+    Route::get('/download-id-card', [RequestMessageController::class, 'download'])->middleware('auth');
 
 });
 

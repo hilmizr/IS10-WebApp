@@ -66,8 +66,6 @@ class VideoController extends Controller
 
         $endDateTime = date('Y-m-d H:i:s');
 
-        dd($startDateTime, $endDateTime);
-
         return view('video.index', ['data' => $validated, 'fileName' => $documentName, 'title' => 'Form Result']);
     }
 
@@ -121,8 +119,6 @@ class VideoController extends Controller
         }
 
         $endDateTime = date('Y-m-d H:i:s');
-
-        dd($startDateTime, $endDateTime);
 
         return response()->download($tempFilePath, 'decrypted_' . $request->user()->username . '_video_enc_' . $request->type . $fileExtension)->deleteFileAfterSend(true);
     }
