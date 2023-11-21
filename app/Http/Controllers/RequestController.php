@@ -5,7 +5,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use ParagonIE\Halite\Asymmetric\EncryptionPublicKey;
+use ParagonIE\Halite\Asymmetric\EncryptionSecretKey;
+use ParagonIE\Halite\EncryptionKeyPair;
+use ParagonIE\Halite\KeyFactory;
+use ParagonIE\HiddenString\HiddenString;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Crypt\RSA;
 
@@ -19,15 +25,24 @@ class RequestController extends Controller
                         ->join('company_users', 'company_users.id', '=', 'request_messages.source_id')
                         ->where('request_messages.destination_id', '=', Auth::user()->id)
                         ->get();
-        // $private_key = DB::table('users')
-        //         ->join('key_clients', 'key_clients.name', '=', 'users.username')
-        //         ->join('key_api_credentials', 'key_api_credentials.key_client_id', '=', 'key_clients.id')
-        //         ->where('users.id', '=', Auth::user()->id)
-        //         ->value('key_api_credentials.private_key');
-        $private_key = Storage::get('keys/' . Auth::user()->username . '.pem');
-        $rsa = RSA::loadPrivateKey($private_key);
+
+        $public_key = Storage::get('keys/' . Auth::user()->username . '.pub');
+        $private_key = Storage::get('keys/' . Auth::user()->username . '.key');
+        
+        $hidden_public_key = new HiddenString($public_key);
+        $hidden_private_key = new HiddenString($private_key);
+
+        $public_key = new EncryptionPublicKey($hidden_public_key);
+        $private_key = new EncryptionSecretKey($hidden_private_key);
+
+        // $rsa = RSA::loadPrivateKey($private_key);
         foreach($messages as $message){
-            $message->encrypted_message = $rsa->decrypt($message->encrypted_message);
+            $encrypted = \ParagonIE\Halite\Asymmetric\Crypto::decrypt(
+                $message->encrypted_message,
+                $private_key,
+                $public_key
+            );
+            $message->encrypted_message = $encrypted->getString();
         }
         return view('request.user_index',[
             'messages' => $messages
@@ -41,7 +56,27 @@ class RequestController extends Controller
                         ->join('users', 'users.id', '=', 'request_messages.source_id')
                         ->where('request_messages.destination_id', '=', Auth::user()->id)
                         ->get();
+
+        $public_key = Storage::get('keys/' . Auth::user()->username . '.pub');
+        $private_key = Storage::get('keys/' . Auth::user()->username . '.key');
+        
+        $hidden_public_key = new HiddenString($public_key);
+        $hidden_private_key = new HiddenString($private_key);
+
+        $public_key = new EncryptionPublicKey($hidden_public_key);
+        $private_key = new EncryptionSecretKey($hidden_private_key);
+        $keyPair = new EncryptionKeyPair($public_key, $private_key);
         // dd($messages);
+
+        foreach ($messages as $message) {
+            $decrypted = \ParagonIE\Halite\Asymmetric\Crypto::decrypt(
+                $message->encrypted_message,
+                $keyPair->getSecretKey(),
+                $keyPair->getPublicKey()
+            );
+            $message->encrypted_message = $decrypted->getString();
+        }
+
         return view('request.index',[
             'messages' => $messages
         ]);

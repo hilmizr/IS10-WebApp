@@ -13,8 +13,10 @@
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.2",
         "laravel/tinker": "^2.8",
+        "paragonie/halite": "^5.1",
         "phpseclib/phpseclib": "^3.0",
-        "pion/laravel-chunk-upload": "^1.5"
+        "pion/laravel-chunk-upload": "^1.5",
+        "spatie/crypto": "^2.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

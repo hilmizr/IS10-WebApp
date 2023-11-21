@@ -94,7 +94,13 @@
                 <p class="text-sm text-gray-500" id="destinationUsername"></p>
             </div>
             <div class="mt-2">
-                <textarea id="messageText" rows="4"
+                <label for="dropdown_id_card">Select an Encryption:</label>
+                <select name="type" id="dropdown_id_card">
+                    <option value="aes">AES</option>
+                    <option value="rc4">RC4</option>
+                    <option value="des">DES</option>
+                </select>
+                <textarea id="messageText2" rows="4"
                     class="mt-4 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                     placeholder="Enter your message here"></textarea>
             </div>
@@ -140,7 +146,7 @@
                 destination_id: userId,
                 source_id: {{ Auth::id() }},
                 encrypted_message: message,
-                type: 'user'
+                type: 'users'
             })
             .then(function(response) {
                 console.log(response.data);
@@ -157,23 +163,47 @@
     }
 
     function sendIDCard(userId, message) {
-        axios.post('/request-id-card', {
-                destination_id: userId,
-                source_id: {{ Auth::id() }},
-                encrypted_message: message
-            })
-            .then(function(response) {
-                console.log(response.data);
-                alert('Request sent successfully');
+        var type = document.getElementById('dropdown_id_card').value;
+        axios.post(`/download-id-card/${userId}`, {
+            destination_id: userId,
+            source_id: {{ Auth::id() }},
+            symmetric_key_requested: message,
+            type: type
+        }, {
+            responseType: 'blob' // Set response type to blob for handling binary data
+        })
+        .then(function(response) {
+            // Check if the response headers indicate a file download
+            const contentType = response.headers['content-type'];
+            const contentDisposition = response.headers['content-disposition'];
 
-                document.getElementById('messageText').value = '';
+            if (contentType && contentType.toLowerCase().includes('application/zip') && contentDisposition) {
+                // Create a blob object from the response data
+                const blob = new Blob([response.data], { type: contentType });
 
-                document.getElementById('requestMessageModal').classList.add('hidden');
-            })
-            .catch(function(error) {
-                console.error('Error:', error);
-                alert('Error sending request');
-            });
+                // Create a link element to trigger the file download
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = 'downloaded_file.zip'; // Set the default filename for the download
+                link.style.display = 'none';
+
+                // Append the link to the body and trigger the click event
+                document.body.appendChild(link);
+                link.click();
+
+                // Clean up after the download
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(link.href);
+            } else {
+                // Handle non-downloadable response here
+                console.log('Response is not a downloadable file.');
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            alert('Error sending request');
+        });
+
     }
 
     document.getElementById('sendRequestButton').addEventListener('click', function() {
@@ -184,7 +214,7 @@
 
     document.getElementById('sendIDCardButton').addEventListener('click', function() {
         var userId = document.getElementById('destinationUsername').getAttribute('data-user-id');
-        var message = document.getElementById('messageText').value;
+        var message = document.getElementById('messageText2').value;
         sendIDCard(userId, message);
     });
 </script>

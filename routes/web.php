@@ -55,6 +55,7 @@ Route::middleware('company.auth')->group(function () {
     Route::get('/appliers/{id}', [JobController::class, 'appliers'])->name('appliers');
     Route::get('/document-download/{id}', [JobController::class, 'document_download'])->name('document-download');
     Route::get('/company-inbox', [RequestController::class, 'company_index'])->name('company-inbox.index');
+    Route::post('/download-id-card/{id}', [RequestMessageController::class, 'download'])->middleware('auth');
     
 });
 Route::post('/request-id-card', [RequestMessageController::class, 'sendRequest']);
