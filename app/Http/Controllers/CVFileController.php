@@ -56,7 +56,6 @@ class CVFileController extends Controller
 
         $endDateTime = date('Y-m-d H:i:s.u');
 
-        dd($startDateTime, $endDateTime);
         return view('upload.uploadfile', ['data' => $validated, 'fileName' => $documentName, 'title' => 'Form Result']);
     }
 

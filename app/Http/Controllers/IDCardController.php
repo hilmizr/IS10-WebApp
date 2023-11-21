@@ -66,8 +66,6 @@ class IDCardController extends Controller
 
         $endDateTime = date('Y-m-d H:i:s.u');
 
-        dd($startDateTime, $endDateTime);
-
         return view('upload.uploadIDCard', ['data' => $validated, 'fileName' => $documentName, 'title' => 'Form Result']);
     }
 

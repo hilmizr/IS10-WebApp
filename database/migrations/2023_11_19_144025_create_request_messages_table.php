@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('destination_id');
             $table->unsignedBigInteger('source_id');
-            $table->text('encrypted_message');
+            $table->binary('encrypted_message');
             $table->boolean('replied')->default(false);
             $table->timestamps();
 
