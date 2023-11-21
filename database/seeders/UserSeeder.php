@@ -7,8 +7,15 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Bytesfield\KeyManager\Facades\KeyManager;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use phpseclib3\Crypt\RSA;
+use Spatie\Crypto\Rsa\KeyPair;
+use Spatie\Crypto\Rsa\PrivateKey;
+use Spatie\Crypto\Rsa\PublicKey;
+use \ParagonIE\Halite\KeyFactory;
+
+
 
 class UserSeeder extends Seeder
 {
@@ -46,22 +53,14 @@ class UserSeeder extends Seeder
                 'key' => $key,
             ]);
             KeyManager::createClient($user->username, 'user', 'active');
-            $privateKey = RSA::createKey(2048)
-                            ->withHash('sha256')
-                            ->withMGFHash('sha256');
-            $publicKey = $privateKey->getPublicKey();
-            Storage::put('keys/' . $user->username . '.pub', $publicKey->toString('PKCS1'));
-            Storage::put('keys/' . $user->username . '.pem', $privateKey->toString('PKCS1'));    
-            // file_put_contents(storage_path('app/keys/' . $user->username . '.pub'), $publicKey->toString('PKCS1'));
-            // file_put_contents(storage_path('app/keys/' . $user->username . '.pem'), $privateKey->toString('PKCS1'));
-            DB::table('key_api_credentials')
-                ->join('key_clients', 'key_api_credentials.key_client_id','=', 'key_clients.id')
-                ->join('users', 'key_clients.name', '=', 'users.username')
-                ->where('users.username', '=', $user->username)
-                ->update([
-                    'public_key' => $publicKey->toString('PKCS1'),
-                    'private_key' => $privateKey->toString('PKCS1'),
-                ]);
+            $keyPair = KeyFactory::generateEncryptionKeyPair();
+
+            $publicKey = $keyPair->getPublicKey()->getRawKeyMaterial();
+            $privateKey = $keyPair->getSecretKey()->getRawKeyMaterial();
+            
+            file_put_contents(Storage::path('keys/' . $user->username . '.pub'), $publicKey);
+            file_put_contents(Storage::path('keys/' . $user->username . '.key'), $privateKey);
+            
         }
     }
 

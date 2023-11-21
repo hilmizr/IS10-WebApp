@@ -20,8 +20,8 @@
                                     {{ $message->encrypted_message }}
                                 </p>
                             </header>
-                            <button class="mt-4 px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300" type="button"
-                            onclick="requestIdCard('{{ $message->from }}', '{{ $message->to }}')">Reply</button>
+                            {{--  <button class="mt-4 px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300" type="button"
+                            onclick="requestIdCard('{{ $message->from }}', '{{ $message->to }}')">Reply</button>  --}}
                         </div>
                     </div>
                 @endforeach
@@ -83,7 +83,8 @@
         axios.post('/request-id-card', {
                 destination_id: userId,
                 source_id: {{ Auth::id() }},
-                encrypted_message: message
+                encrypted_message: message,
+                type = 'users'
             })
             .then(function(response) {
                 console.log(response.data);

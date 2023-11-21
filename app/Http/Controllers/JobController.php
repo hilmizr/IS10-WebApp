@@ -114,21 +114,21 @@ class JobController extends Controller
         // dd("document download hit");
         // Specify the path to the encrypted file
         $user = User::find($id);
-        $metadataPath = 'idcards/' . $user->username . '_idcard_enc_metadata.json';
-        if (!Storage::exists($metadataPath)) {
-            session()->flash('error', 'Metadata tidak ditemukan');
-            return back();
-        }
-        $metadata = json_decode(Storage::get($metadataPath), true);
-        $pictureExtension = $metadata['fileExtension'];
-        $idcard_filepath = Storage::path('idcards/' . $user->username . '_idcard_enc_' . $request->type . $pictureExtension);
-        if (!Storage::exists('idcards/' . $user->username . '_idcard_enc_' . $request->type . $pictureExtension)) {
-            session()->flash('error', 'File tidak ditemukan');
-            Log::info($idcard_filepath);
-            Log::info(!Storage::exists($idcard_filepath));
+        // $metadataPath = 'idcards/' . $user->username . '_idcard_enc_metadata.json';
+        // if (!Storage::exists($metadataPath)) {
+        //     session()->flash('error', 'Metadata tidak ditemukan');
+        //     return back();
+        // }
+        // $metadata = json_decode(Storage::get($metadataPath), true);
+        // $pictureExtension = $metadata['fileExtension'];
+        // $idcard_filepath = Storage::path('idcards/' . $user->username . '_idcard_enc_' . $request->type . $pictureExtension);
+        // if (!Storage::exists('idcards/' . $user->username . '_idcard_enc_' . $request->type . $pictureExtension)) {
+        //     session()->flash('error', 'File tidak ditemukan');
+        //     Log::info($idcard_filepath);
+        //     Log::info(!Storage::exists($idcard_filepath));
 
-            return back();
-        }
+        //     return back();
+        // }
 
         $cv_filepath = Storage::path('files/' . $user->username . '_cv_enc_' . $request->type . '.pdf');
         if (!Storage::exists('files/' . $user->username . '_cv_enc_' . $request->type . '.pdf')) {
@@ -156,23 +156,23 @@ class JobController extends Controller
             return back();
         }
 
-        $temp_id_filepath = tempnam(sys_get_temp_dir(), 'decrypted_idcard');
+        // $temp_id_filepath = tempnam(sys_get_temp_dir(), 'decrypted_idcard');
         $temp_cv_filepath = tempnam(sys_get_temp_dir(), 'decrypted_cv');
         $temp_video_filepath = tempnam(sys_get_temp_dir(), 'decrypted_video');
 
         switch ($request->type) {
             case "aes":
-                $this->decryptFileUsingAES($idcard_filepath, $temp_id_filepath, $user->userKey->key);
+                // $this->decryptFileUsingAES($idcard_filepath, $temp_id_filepath, $user->userKey->key);
                 $this->decryptFileUsingAES($cv_filepath, $temp_cv_filepath, $user->userKey->key);
                 $this->decryptFileUsingAES($video_filepath, $temp_video_filepath, $user->userKey->key);
                 break;
             case "rc4":
-                $this->decryptFileUsingRC4($idcard_filepath, $temp_id_filepath, $user->userKey->key);
+                // $this->decryptFileUsingRC4($idcard_filepath, $temp_id_filepath, $user->userKey->key);
                 $this->decryptFileUsingRC4($cv_filepath, $temp_cv_filepath, $user->userKey->key);
                 $this->decryptFileUsingRC4($video_filepath, $temp_video_filepath, $user->userKey->key);
                 break;
             case "des":
-                $this->decryptFileUsingDES($idcard_filepath, $temp_id_filepath, $user->userKey->key);
+                // $this->decryptFileUsingDES($idcard_filepath, $temp_id_filepath, $user->userKey->key);
                 $this->decryptFileUsingDES($cv_filepath, $temp_cv_filepath, $user->userKey->key);
                 $this->decryptFileUsingDES($video_filepath, $temp_video_filepath, $user->userKey->key);
                 break;
@@ -183,13 +183,13 @@ class JobController extends Controller
         // zip 3 files
         $zip = new \ZipArchive();
         $zip->open(Storage::path('files/' . 'decrypted_' . $user->username . '_document.zip'), \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-        $zip->addFile($temp_id_filepath, 'idcard' . $pictureExtension);
+        // $zip->addFile($temp_id_filepath, 'idcard' . $pictureExtension);
         $zip->addFile($temp_cv_filepath, 'cv.pdf');
         $zip->addFile($temp_video_filepath, 'video' . $fileExtension);
         $zip->close();
 
         // delete temp files
-        unlink($temp_id_filepath);
+        // unlink($temp_id_filepath);
         unlink($temp_cv_filepath);
         unlink($temp_video_filepath);
 
