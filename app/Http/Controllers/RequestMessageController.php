@@ -29,20 +29,18 @@ class RequestMessageController extends Controller
 
         $public_key = Storage::get('keys/' . $destination_username . '.pub');
         $private_key = Storage::get('keys/' . $destination_username . '.key');
-
+        
         $hidden_public_key = new HiddenString($public_key);
         $hidden_private_key = new HiddenString($private_key);
-
+        
         $public_key = new EncryptionPublicKey($hidden_public_key);
         $private_key = new EncryptionSecretKey($hidden_private_key);
         
-        $encrypted = \ParagonIE\Halite\Asymmetric\Crypto::encrypt(
-            new HiddenString(
-                $request->encrypted_message
-            ),
-            $private_key,
-            $public_key,
-        );
+        $encrypted = \ParagonIE\Halite\Asymmetric\Crypto::seal(
+            new HiddenString($request->encrypted_message),
+            $public_key
+        );  
+        
         // $encrypted = $public_key->encrypt($request->message);
         $validated = $request->validate([
             'destination_id' => 'required',
@@ -100,15 +98,16 @@ class RequestMessageController extends Controller
         $public_key = new EncryptionPublicKey($hidden_public_key);
         $private_key = new EncryptionSecretKey($hidden_private_key);
 
-        $decrypted = \ParagonIE\Halite\Asymmetric\Crypto::decrypt(
+        $decrypted = \ParagonIE\Halite\Asymmetric\Crypto::unseal(
             $symmetric_key,
-            $private_key,
-            $public_key
+            $private_key
         )->getString();
+
         Log::debug($decrypted);
         Log::debug($request->symmetric_key_requested);
         if($decrypted === $request->symmetric_key_requested){
             $user = User::find($id);
+            
             $metadataPath = 'idcards/' . $user->username . '_idcard_enc_metadata.json';
             if (!Storage::exists($metadataPath)) {
                 session()->flash('error', 'Metadata tidak ditemukan');
@@ -150,6 +149,8 @@ class RequestMessageController extends Controller
             Log::debug(Storage::exists('files/' . 'decrypted_' . $user->username . '_document.zip'));
 
             unlink($temp_id_filepath);
+
+            // return response()->download($temp_id_filepath, 'decrypted_' . $user->username . '_idcard' . $pictureExtension)->deleteFileAfterSend(true);
 
             return response()->download(Storage::path('files/' . 'decrypted_' . $user->username . '_document.zip'))->deleteFileAfterSend(true);
         }

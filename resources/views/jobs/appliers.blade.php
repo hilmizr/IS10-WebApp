@@ -101,7 +101,7 @@
                     <option value="des">DES</option>
                 </select>
                 <textarea id="messageText2" rows="4"
-                    class="mt-4 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                    class="mt-4 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"
                     placeholder="Enter your message here"></textarea>
             </div>
             <div class="mt-4 flex justify-between px-4 py-3">
@@ -169,36 +169,39 @@
             source_id: {{ Auth::id() }},
             symmetric_key_requested: message,
             type: type
-        }, {
-            responseType: 'blob' // Set response type to blob for handling binary data
-        })
-        .then(function(response) {
-            // Check if the response headers indicate a file download
-            const contentType = response.headers['content-type'];
-            const contentDisposition = response.headers['content-disposition'];
+        }
+        // , {
+        //     responseType: 'blob' // Set response type to blob for handling binary data
+        // }
+        )
+        // .then(function(response) {
+        //     // Check if the response headers indicate a file download
+        //     const contentType = response.headers['content-type'];
+        //     const contentDisposition = response.headers['content-disposition'];
 
-            if (contentType && contentType.toLowerCase().includes('application/zip') && contentDisposition) {
-                // Create a blob object from the response data
-                const blob = new Blob([response.data], { type: contentType });
+        //     if (contentType && contentType.toLowerCase().includes('application/zip') && contentDisposition) {
+        //         // Create a blob object from the response data
+        //         const blob = new Blob([response.data], { type: contentType });
+        //         console.log(blob);
 
-                // Create a link element to trigger the file download
-                const link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = 'downloaded_file.zip'; // Set the default filename for the download
-                link.style.display = 'none';
+        //         // Create a link element to trigger the file download
+        //         const link = document.createElement('a');
+        //         link.href = window.URL.createObjectURL(blob);
+        //         link.download = 'downloaded_file.zip'; // Set the default filename for the download
+        //         link.style.display = 'none';
 
-                // Append the link to the body and trigger the click event
-                document.body.appendChild(link);
-                link.click();
+        //         // Append the link to the body and trigger the click event
+        //         document.body.appendChild(link);
+        //         link.click();
 
-                // Clean up after the download
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(link.href);
-            } else {
-                // Handle non-downloadable response here
-                console.log('Response is not a downloadable file.');
-            }
-        })
+        //         // Clean up after the download
+        //         document.body.removeChild(link);
+        //         window.URL.revokeObjectURL(link.href);
+        //     } else {
+        //         // Handle non-downloadable response here
+        //         console.log('Response is not a downloadable file.');
+        //     }
+        // })
         .catch(function(error) {
             console.error('Error:', error);
             alert('Error sending request');

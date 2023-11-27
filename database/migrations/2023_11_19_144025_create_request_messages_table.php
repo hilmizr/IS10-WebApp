@@ -20,8 +20,8 @@ return new class extends Migration
             $table->timestamps();
 
             // Foreign key constraints
-            $table->foreign('destination_id')->references('id')->on('users')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->foreign('source_id')->references('id')->on('company_users')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreign('destination_id')->references('id')->on('company_users')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreign('source_id')->references('id')->on('users')->cascadeOnDelete()->cascadeOnUpdate();
         });
     }
 
