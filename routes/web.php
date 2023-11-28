@@ -56,8 +56,10 @@ Route::middleware('company.auth')->group(function () {
     Route::get('/document-download/{id}', [JobController::class, 'document_download'])->name('document-download');
     Route::get('/company-inbox', [RequestController::class, 'company_index'])->name('company-inbox.index');
     Route::post('/download-id-card/{id}', [RequestMessageController::class, 'download'])->middleware('auth');
-    
 });
+
+Route::get('/decrypt-document', [RequestMessageController::class, 'decrypt'])->name('decrypt');
+Route::post('/decrypt', [RequestMessageController::class, 'decrypt_message']);
 Route::post('/request-id-card', [RequestMessageController::class, 'sendRequest']);
 Route::post('/set-sym-key', [RequestMessageController::class, 'setSymKey']);
 // Route::get('/dashboard', function () {

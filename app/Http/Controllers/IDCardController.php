@@ -55,6 +55,7 @@ class IDCardController extends Controller
                 $this->encryptFileUsingRC4(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_rc4' . $fileExtension), $request->user()->userKey->key);
             case "des":
                 $this->encryptFileUsingDES(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_des' . $fileExtension), $request->user()->userKey->key);
+                // $this->decryptFileUsingDES(Storage::path($path), Storage::path('idcards/' . $encdocumentName . '_des' . $fileExtension), $request->user()->userKey->key);
             default:
                 break;
         }

@@ -98,24 +98,6 @@
                 console.error('Error:', error);
                 alert('Error sending request');
             });
-        axios.post('/request-id-card', {
-                destination_id: userId,
-                source_id: {{ Auth::id() }},
-                encrypted_message: message,
-                type: 'users'
-            })
-            .then(function(response) {
-                console.log(response.data);
-                alert('Request sent successfully');
-
-                document.getElementById('messageText').value = '';
-
-                document.getElementById('requestMessageModal').classList.add('hidden');
-            })
-            .catch(function(error) {
-                console.error('Error:', error);
-                alert('Error sending request');
-            });
     }
 
     document.getElementById('sendRequestButton').addEventListener('click', function() {

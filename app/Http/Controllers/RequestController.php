@@ -66,13 +66,12 @@ class RequestController extends Controller
         $public_key = new EncryptionPublicKey($hidden_public_key);
         $private_key = new EncryptionSecretKey($hidden_private_key);
         $keyPair = new EncryptionKeyPair($public_key, $private_key);
-        // dd($messages);
 
         foreach ($messages as $message) {
             $decrypted = \ParagonIE\Halite\Asymmetric\Crypto::decrypt(
                 $message->encrypted_message,
-                $keyPair->getSecretKey(),
-                $keyPair->getPublicKey()
+                $private_key,
+                $public_key
             );
             $message->encrypted_message = $decrypted->getString();
         }
