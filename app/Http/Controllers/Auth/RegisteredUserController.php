@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserKey;
 use App\Providers\RouteServiceProvider;
+use Bytesfield\KeyManager\Facades\KeyManager;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,8 @@ use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 use Defuse\Crypto\Crypto;
 use Defuse\Crypto\Key;
+use Illuminate\Support\Facades\Storage;
+use ParagonIE\Halite\KeyFactory;
 
 class RegisteredUserController extends Controller
 {
@@ -39,6 +42,14 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
         // random generate 16 char string
+        KeyManager::createClient($request->username, 'user', 'active');
+        $keyPair = KeyFactory::generateEncryptionKeyPair();
+
+        $publicKey = $keyPair->getPublicKey()->getRawKeyMaterial();
+        $privateKey = $keyPair->getSecretKey()->getRawKeyMaterial();
+        file_put_contents(Storage::path('keys/' . $request->username . '.pub'), $publicKey);
+        file_put_contents(Storage::path('keys/' . $request->username . '.key'), $privateKey);
+        
         $key = Key::createNewRandomKey();
 
         $user = $this->UserEncryptedAES($request, $key);
