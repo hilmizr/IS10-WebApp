@@ -149,6 +149,7 @@
                 type: 'users'
             })
             .then(function(response) {
+                console.log(message);
                 console.log(response.data);
                 alert('Request sent successfully');
 
@@ -169,39 +170,32 @@
             source_id: {{ Auth::id() }},
             symmetric_key_requested: message,
             type: type
-        }
-        // , {
-        //     responseType: 'blob' // Set response type to blob for handling binary data
-        // }
-        )
-        // .then(function(response) {
-        //     // Check if the response headers indicate a file download
-        //     const contentType = response.headers['content-type'];
-        //     const contentDisposition = response.headers['content-disposition'];
-
-        //     if (contentType && contentType.toLowerCase().includes('application/zip') && contentDisposition) {
-        //         // Create a blob object from the response data
-        //         const blob = new Blob([response.data], { type: contentType });
-        //         console.log(blob);
-
-        //         // Create a link element to trigger the file download
-        //         const link = document.createElement('a');
-        //         link.href = window.URL.createObjectURL(blob);
-        //         link.download = 'downloaded_file.zip'; // Set the default filename for the download
-        //         link.style.display = 'none';
-
-        //         // Append the link to the body and trigger the click event
-        //         document.body.appendChild(link);
-        //         link.click();
-
-        //         // Clean up after the download
-        //         document.body.removeChild(link);
-        //         window.URL.revokeObjectURL(link.href);
-        //     } else {
-        //         // Handle non-downloadable response here
-        //         console.log('Response is not a downloadable file.');
-        //     }
-        // })
+        }, {
+            responseType: 'blob' // Set response type to blob for handling binary data
+        })
+        .then(function(response) {
+            // Check if the response headers indicate a file download
+            const contentType = response.headers['content-type'];
+            const contentDisposition = response.headers['content-disposition'];
+            if (contentType && contentType.toLowerCase().includes('application/zip') && contentDisposition) {
+                // Create a blob object from the response data
+                const blob = new Blob([response.data], { type: contentType });
+                // Create a link element to trigger the file download
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = 'downloaded_file.zip'; // Set the default filename for the download
+                link.style.display = 'none';
+                // Append the link to the body and trigger the click event
+                document.body.appendChild(link);
+                link.click();
+                // Clean up after the download
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(link.href);
+            } else {
+                // Handle non-downloadable response here
+                console.log('Response is not a downloadable file.');
+            }
+        })
         .catch(function(error) {
             console.error('Error:', error);
             alert('Error sending request');

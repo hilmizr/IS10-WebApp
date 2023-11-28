@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\RequestMessage;
 use App\Models\SymmetricKey;
 use App\Models\User;
+use Defuse\Crypto\Key;
 use Illuminate\Contracts\Cache\Store;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,30 +31,35 @@ class RequestMessageController extends Controller
         $public_key = Storage::get('keys/' . $destination_username . '.pub');
         $private_key = Storage::get('keys/' . $destination_username . '.key');
         
+        // Log::debug($destination_username);
+
         $hidden_public_key = new HiddenString($public_key);
         $hidden_private_key = new HiddenString($private_key);
         
         $public_key = new EncryptionPublicKey($hidden_public_key);
         $private_key = new EncryptionSecretKey($hidden_private_key);
-        
-        $encrypted = \ParagonIE\Halite\Asymmetric\Crypto::seal(
-            new HiddenString($request->encrypted_message),
-            $public_key
-        );  
-        
-        // $encrypted = $public_key->encrypt($request->message);
-        $validated = $request->validate([
-            'destination_id' => 'required',
-            'source_id' => 'required',
-            'encrypted_message' => 'required|string',
-            'type' => 'required|string',
-        ]);
-        
-        $validated['encrypted_message'] = $encrypted;
 
-        $message = RequestMessage::create($validated);
-
+        
         if ($request->type == 'company_users'){
+            $key = Key::createNewRandomKey()->saveToAsciiSafeString();
+            $encrypted = \ParagonIE\Halite\Asymmetric\Crypto::encrypt(
+                new HiddenString($key),
+                $private_key,
+                $public_key,
+            );
+            
+            // $encrypted = $public_key->encrypt($request->message);
+            $validated = $request->validate([
+                'destination_id' => 'required',
+                'source_id' => 'required',
+                'encrypted_message' => 'required|string',
+                'type' => 'required|string',
+            ]);
+            
+            $validated['encrypted_message'] = $encrypted;
+    
+            $message = RequestMessage::create($validated);
+        
             $exist = DB::table('symmetric_keys')
                         ->where('company_id', '=', $request->destination_id)
                         ->where('user_id', '=', $request->source_id)
@@ -71,6 +77,69 @@ class RequestMessageController extends Controller
                     'key' => $encrypted,
                 ]);
             }
+
+            $user = User::find($request->source_id);
+            Log::debug($user->username);
+        
+            $metadataPath = 'idcards/' . $user->username . '_idcard_enc_metadata.json';
+            if (!Storage::exists($metadataPath)) {
+                session()->flash('error', 'Metadata tidak ditemukan');
+                return back();
+            }
+            $metadata = json_decode(Storage::get($metadataPath), true);
+            $pictureExtension = $metadata['fileExtension'];
+            $idcard_filepath = Storage::path('idcards/' . $user->username . '_idcard_enc_' . 'aes' . $pictureExtension);
+            if (!Storage::exists('idcards/' . $user->username . '_idcard_enc_' . 'aes' . $pictureExtension)) {
+                session()->flash('error', 'File tidak ditemukan');
+                Log::info($idcard_filepath);
+                Log::info(!Storage::exists($idcard_filepath));
+
+                return back();
+            }
+
+            Log::debug($request->user()->userKey->key);
+            
+            Log::debug($key);
+            $this->encryptFileUsingAES(Storage::path('idcards/temp2/' . $user->username . '_idcard_enc_aes' . $pictureExtension), Storage::path('idcards/temp/' . $user->username . '_idcard_enc_aes' . $pictureExtension), $key);
+            $this->encryptFileUsingRC4(Storage::path('idcards/temp2/' . $user->username . '_idcard_enc_rc4' . $pictureExtension), Storage::path('idcards/temp/' . $user->username . '_idcard_enc_rc4' . $pictureExtension), $key);
+            $this->encryptFileUsingDES(Storage::path('idcards/temp2/' . $user->username . '_idcard_enc_des' . $pictureExtension), Storage::path('idcards/temp/' . $user->username . '_idcard_enc_des' . $pictureExtension), $key);
+
+            // $this->decryptFileUsingAES(Storage::path('idcards/temp/' . $user->username . '_idcard_enc_aes' . $pictureExtension), Storage::path('idcards/temp/' . $user->username . '_idcard_enc_aes' . $pictureExtension), $key);
+            // $this->decryptFileUsingRC4(Storage::path('idcards/temp/' . $user->username . '_idcard_enc_rc4' . $pictureExtension), Storage::path('idcards/temp/' . $user->username . '_idcard_enc_rc4' . $pictureExtension), $key);
+            // $this->decryptFileUsingDES(Storage::path('idcards/temp/' . $user->username . '_idcard_enc_des' . $pictureExtension), Storage::path('idcards/temp/' . $user->username . '_idcard_enc_des' . $pictureExtension), $key);
+        
+        }
+        else{
+            $encrypted = \ParagonIE\Halite\Asymmetric\Crypto::encrypt(
+                new HiddenString($request->encrypted_message),
+                $private_key,
+                $public_key,
+            );
+            
+            // $encrypted = $public_key->encrypt($request->message);
+            $validated = $request->validate([
+                'destination_id' => 'required',
+                'source_id' => 'required',
+                'encrypted_message' => 'required|string',
+                'type' => 'required|string',
+            ]);
+            
+            $validated['encrypted_message'] = $encrypted;
+    
+            $message = RequestMessage::create($validated);
+            $user = User::find($request->destination_id);
+            Log::debug($user->username);
+        
+            $metadataPath = 'idcards/' . $user->username . '_idcard_enc_metadata.json';
+            if (!Storage::exists($metadataPath)) {
+                session()->flash('error', 'Metadata tidak ditemukan');
+                return back();
+            }
+            $metadata = json_decode(Storage::get($metadataPath), true);
+            $pictureExtension = $metadata['fileExtension'];
+            $this->decryptFileUsingAES(Storage::path('idcards/' . $user->username . '_idcard_enc_aes' . $pictureExtension), Storage::path('idcards/temp2/' . $user->username . '_idcard_enc_aes' . $pictureExtension), $user->userKey->key);
+            $this->decryptFileUsingRC4(Storage::path('idcards/' . $user->username . '_idcard_enc_rc4' . $pictureExtension), Storage::path('idcards/temp2/' . $user->username . '_idcard_enc_rc4' . $pictureExtension), $user->userKey->key);
+            $this->decryptFileUsingDES(Storage::path('idcards/' . $user->username . '_idcard_enc_des' . $pictureExtension), Storage::path('idcards/temp2/' . $user->username . '_idcard_enc_des' . $pictureExtension), $user->userKey->key);
         }
 
         if ($message) {
@@ -98,64 +167,175 @@ class RequestMessageController extends Controller
         $public_key = new EncryptionPublicKey($hidden_public_key);
         $private_key = new EncryptionSecretKey($hidden_private_key);
 
-        $decrypted = \ParagonIE\Halite\Asymmetric\Crypto::unseal(
+        $decrypted = \ParagonIE\Halite\Asymmetric\Crypto::decrypt(
             $symmetric_key,
-            $private_key
+            $private_key,
+            $public_key
         )->getString();
 
         Log::debug($decrypted);
         Log::debug($request->symmetric_key_requested);
-        if($decrypted === $request->symmetric_key_requested){
-            $user = User::find($id);
-            
-            $metadataPath = 'idcards/' . $user->username . '_idcard_enc_metadata.json';
-            if (!Storage::exists($metadataPath)) {
-                session()->flash('error', 'Metadata tidak ditemukan');
-                return back();
-            }
-            $metadata = json_decode(Storage::get($metadataPath), true);
-            $pictureExtension = $metadata['fileExtension'];
-            $idcard_filepath = Storage::path('idcards/' . $user->username . '_idcard_enc_' . $request->type . $pictureExtension);
-            if (!Storage::exists('idcards/' . $user->username . '_idcard_enc_' . $request->type . $pictureExtension)) {
-                session()->flash('error', 'File tidak ditemukan');
-                Log::info($idcard_filepath);
-                Log::info(!Storage::exists($idcard_filepath));
 
-                return back();
-            }
-
-            Log::debug($idcard_filepath);
-            $temp_id_filepath = tempnam(sys_get_temp_dir(), 'decrypted_idcard');
-            switch ($request->type) {
-                case "aes":
-                    $this->decryptFileUsingAES($idcard_filepath, $temp_id_filepath, $user->userKey->key);
-                    break;
-                case "rc4":
-                    $this->decryptFileUsingRC4($idcard_filepath, $temp_id_filepath, $user->userKey->key);
-                    break;
-                case "des":
-                    $this->decryptFileUsingDES($idcard_filepath, $temp_id_filepath, $user->userKey->key);
-                    break;
-                default:
-                    break;
-            }
-
-            $zip = new \ZipArchive();
-
-            $zip->open(Storage::path('files/' . 'decrypted_' . $user->username . '_document.zip'), \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-            $zip->addFile($temp_id_filepath, 'idcard' . $pictureExtension);
-            $zip->close();
-
-            Log::debug(Storage::exists('files/' . 'decrypted_' . $user->username . '_document.zip'));
-
-            unlink($temp_id_filepath);
-
-            // return response()->download($temp_id_filepath, 'decrypted_' . $user->username . '_idcard' . $pictureExtension)->deleteFileAfterSend(true);
-
-            return response()->download(Storage::path('files/' . 'decrypted_' . $user->username . '_document.zip'))->deleteFileAfterSend(true);
+        $user = User::find($id);
+        
+        $metadataPath = 'idcards/' . $user->username . '_idcard_enc_metadata.json';
+        if (!Storage::exists($metadataPath)) {
+            session()->flash('error', 'Metadata tidak ditemukan');
+            return back();
         }
+        $metadata = json_decode(Storage::get($metadataPath), true);
+        $pictureExtension = $metadata['fileExtension'];
+        $idcard_filepath = Storage::path('idcards/' . $user->username . '_idcard_enc_' . $request->type . $pictureExtension);
+        if (!Storage::exists('idcards/' . $user->username . '_idcard_enc_' . $request->type . $pictureExtension)) {
+            session()->flash('error', 'File tidak ditemukan');
+            Log::info($idcard_filepath);
+            Log::info(!Storage::exists($idcard_filepath));
+
+            return back();
+        }
+
+        Log::debug(Storage::path('idcards/temp/' . $user->username . '_idcard_enc_aes' . $pictureExtension));
+        Log::debug($request->symmetric_key_requested);
+        Log::debug($request->type);
+        $temp_id_filepath = tempnam(sys_get_temp_dir(), 'decrypted_idcard');
+        switch ($request->type) {
+            case "aes":
+                $this->decryptFileUsingAES(Storage::path('idcards/temp/' . $user->username . '_idcard_enc_aes' . $pictureExtension), $temp_id_filepath, $request->symmetric_key_requested);
+                break;
+            case "rc4":
+                $this->decryptFileUsingRC4(Storage::path('idcards/temp/' . $user->username . '_idcard_enc_rc4' . $pictureExtension), $temp_id_filepath, $request->symmetric_key_requested);
+                break;
+            case "des":
+                $this->decryptFileUsingDES(Storage::path('idcards/temp/' . $user->username . '_idcard_enc_des' . $pictureExtension), $temp_id_filepath, $request->symmetric_key_requested);
+                break;
+            default:
+                break;
+        }
+
+        $zip = new \ZipArchive();
+
+        $zip->open(Storage::path('files/' . 'decrypted_' . $user->username . '_document.zip'), \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFile($temp_id_filepath, 'idcard' . $pictureExtension);
+        $zip->close();
+
+        Log::debug(Storage::exists('files/' . 'decrypted_' . $user->username . '_document.zip'));
+
+        unlink($temp_id_filepath);
+
+        // return response()->download($temp_id_filepath, 'decrypted_' . $user->username . '_idcard' . $pictureExtension)->deleteFileAfterSend(true);
+
+        return response()->download(Storage::path('files/' . 'decrypted_' . $user->username . '_document.zip'))->deleteFileAfterSend(true);
     }
 
+    public function decrypt(){
+        return view('request.decrypt');
+    }
+
+    public function decrypt_message(Request $request){
+        $validated = $request->validate([
+            'document' => 'required|mimes:jpg,jpeg,png|max:10000',
+        ]);
+
+        $document = $request->file('document');
+        
+
+
+    }
+
+    public function FileUsingAES($sourcePath, $destinationPath, $decryptKey, $encryptKey){
+        $cipher = 'aes-256-cbc';
+
+        // Read the contents of the source file
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
+
+        // Read the IV (Initialization Vector) for AES decryption
+        $iv = fread($inputFile, openssl_cipher_iv_length($cipher));
+        $iv2 = openssl_random_pseudo_bytes(openssl_cipher_iv_length($cipher));
+
+        while (!feof($inputFile)) {
+            // Read chunks of the file and decrypt using the decryption key
+            $ciphertext = fread($inputFile, 16 * 1024 + openssl_cipher_iv_length($cipher));
+            $plaintext = openssl_decrypt($ciphertext, $cipher, $decryptKey, OPENSSL_RAW_DATA, $iv);
+
+            // Encrypt the decrypted content using the encryption key
+            // $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($cipher));
+            $ciphertext = openssl_encrypt($plaintext, $cipher, $encryptKey, OPENSSL_RAW_DATA, $iv2);
+
+            // Write the encrypted content to the output file
+            fwrite($outputFile, $ciphertext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
+    }
+
+    public function FileUsingDES($sourcePath, $destinationPath, $decryptKey, $encryptKey){
+        $cipher = 'des-cbc';
+
+        // Read the contents of the source file
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
+        
+        // Read the IV (Initialization Vector) for DES decryption
+        $iv = fread($inputFile, openssl_cipher_iv_length($cipher));
+        $iv2 = openssl_random_pseudo_bytes(openssl_cipher_iv_length($cipher));
+        
+        while (!feof($inputFile)) {
+            // Read chunks of the file and decrypt using the decryption key
+            $ciphertext = fread($inputFile, 8 * 1024 + openssl_cipher_iv_length($cipher));
+            $plaintext = openssl_decrypt($ciphertext, $cipher, $decryptKey, OPENSSL_RAW_DATA, $iv);
+            
+            // Encrypt the decrypted content using the encryption key
+            $ciphertext = openssl_encrypt($plaintext, $cipher, $encryptKey, OPENSSL_RAW_DATA, $iv2);
+            
+            // Write the encrypted content to the output file
+            fwrite($outputFile, $ciphertext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
+        
+    }
+
+    public function FileUsingRC4($sourcePath, $destinationPath, $decryptKey, $encryptKey)
+    {
+        $cipher = 'rc4';
+
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
+
+        while (!feof($inputFile)) {
+            $ciphertext = fread($inputFile, 16 * 1024);
+            $plaintext = openssl_decrypt($ciphertext, $cipher, $decryptKey, OPENSSL_RAW_DATA);
+            $ciphertext = openssl_encrypt($plaintext, $cipher, $encryptKey, OPENSSL_RAW_DATA);
+            fwrite($outputFile, $ciphertext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
+    }
+    
+    public function encryptFileUsingAES($sourcePath, $destinationPath, $key)
+    {
+        $cipher = 'aes-256-cbc';
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($cipher));
+
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
+
+        fwrite($outputFile, $iv);
+
+        while (!feof($inputFile)) {
+            $plaintext = fread($inputFile, 16 * 1024);
+            $ciphertext = openssl_encrypt($plaintext, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+            fwrite($outputFile, $ciphertext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
+    }
+    
     public function decryptFileUsingAES($sourcePath, $destinationPath, $key)
     {
         $cipher = 'aes-256-cbc';
@@ -210,4 +390,43 @@ class RequestMessageController extends Controller
         fclose($inputFile);
         fclose($outputFile);
     }
+
+
+    public function encryptFileUsingRC4($sourcePath, $destinationPath, $key)
+    {
+        $cipher = 'rc4';
+
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
+
+        while (!feof($inputFile)) {
+            $plaintext = fread($inputFile, 16 * 1024);
+            $ciphertext = openssl_encrypt($plaintext, $cipher, $key, OPENSSL_RAW_DATA);
+            fwrite($outputFile, $ciphertext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
+    }
+
+    public function encryptFileUsingDES($sourcePath, $destinationPath, $key)
+    {
+        $cipher = 'des-cbc';
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($cipher));
+
+        $inputFile = fopen($sourcePath, 'rb');
+        $outputFile = fopen($destinationPath, 'wb');
+
+        fwrite($outputFile, $iv);
+
+        while (!feof($inputFile)) {
+            $plaintext = fread($inputFile, 8 * 1024);
+            $ciphertext = openssl_encrypt($plaintext, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+            fwrite($outputFile, $ciphertext);
+        }
+
+        fclose($inputFile);
+        fclose($outputFile);
+    }
+
 }

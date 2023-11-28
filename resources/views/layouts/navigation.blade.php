@@ -56,6 +56,14 @@
 
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                     @if (Auth::user() instanceof App\Models\CompanyUser)
+                        <x-nav-link :href="route('decrypt')" :active="request()->routeIs('company-inbox.index')">
+                            {{ __('Decrypt') }}
+                        </x-nav-link>                        
+                    @endif
+                </div>
+
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                    @if (Auth::user() instanceof App\Models\CompanyUser)
                         <x-nav-link :href="route('company-job.index')" :active="request()->routeIs('company-job.index')">
                             {{ __('Jobs') }}
                         </x-nav-link>

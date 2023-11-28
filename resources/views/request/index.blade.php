@@ -16,8 +16,10 @@
                                     {{ __('Username : ') }} {{ $message->from }}
                                 </h2>
                         
-                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                    {{ $message->encrypted_message }}
+                                <p class="select-all mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                    <a href="">
+                                        {{ $message->encrypted_message }}
+                                    </a>
                                 </p>
                             </header>
                             {{--  <button class="mt-4 px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300" type="button"
