@@ -47,6 +47,9 @@ class CompanySeeder extends Seeder
 
             $publicKey = $keyPair->getPublicKey()->getRawKeyMaterial();
             $privateKey = $keyPair->getSecretKey()->getRawKeyMaterial();
+
+            $publicKey = $this->EncryptAES($publicKey, $key);
+            $privateKey = $this->EncryptAES($privateKey, $key);
             
             file_put_contents(Storage::path('keys/' . $user->username . '.pub'), $publicKey);
             file_put_contents(Storage::path('keys/' . $user->username . '.key'), $privateKey);
