@@ -29,6 +29,12 @@ class RequestController extends Controller
         $public_key = Storage::get('keys/' . Auth::user()->username . '.pub');
         $private_key = Storage::get('keys/' . Auth::user()->username . '.key');
         
+        $public_key = $this->DecryptAES($public_key, Auth::user()->userKey->key);
+        $private_key = $this->DecryptAES($private_key, Auth::user()->userKey->key);
+
+        Log::debug($public_key);
+        Log::debug($private_key);
+
         $hidden_public_key = new HiddenString($public_key);
         $hidden_private_key = new HiddenString($private_key);
 
@@ -59,6 +65,12 @@ class RequestController extends Controller
 
         $public_key = Storage::get('keys/' . Auth::user()->username . '.pub');
         $private_key = Storage::get('keys/' . Auth::user()->username . '.key');
+
+        $public_key = $this->DecryptAES($public_key, Auth::user()->companyKey->key);
+        $private_key = $this->DecryptAES($private_key, Auth::user()->companyKey->key);
+
+        Log::debug($public_key);
+        Log::debug($private_key);
         
         $hidden_public_key = new HiddenString($public_key);
         $hidden_private_key = new HiddenString($private_key);
@@ -81,7 +93,10 @@ class RequestController extends Controller
         ]);
     }
 
-    public function send(){
-        
+    public function DecryptAES($ciphertext, $key){
+        $cipher = 'aes-256-cbc';
+        $iv = substr($key, 0, 16);
+        $decrypted = openssl_decrypt(base64_decode($ciphertext), $cipher, $key, 0, $iv);
+        return $decrypted;
     }
 }

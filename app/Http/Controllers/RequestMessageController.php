@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CompanyUser;
 use Illuminate\Http\Request;
 use App\Models\RequestMessage;
 use App\Models\SymmetricKey;
@@ -30,7 +31,20 @@ class RequestMessageController extends Controller
 
         $public_key = Storage::get('keys/' . $destination_username . '.pub');
         $private_key = Storage::get('keys/' . $destination_username . '.key');
+
+        if($request->type == 'company_users'){
+            $user_temp = CompanyUser::find($request->destination_id);
+            $public_key = $this->DecryptAES($public_key, $user_temp->companyKey->key);
+            $private_key = $this->DecryptAES($private_key, $user_temp->companyKey->key);
+        }
+        else{
+            $user_temp = User::find($request->destination_id);
+            $public_key = $this->DecryptAES($public_key, $user_temp->userKey->key);
+            $private_key = $this->DecryptAES($private_key, $user_temp->userKey->key);
+        }
         
+        Log::debug($public_key);
+        Log::debug($private_key);
         // Log::debug($destination_username);
 
         $hidden_public_key = new HiddenString($public_key);
@@ -158,8 +172,13 @@ class RequestMessageController extends Controller
             ->where('user_id', '=', $id)
             ->value('key');
         Log::debug(Auth::user()->id);
+        
+        $user_temp = CompanyUser::find(Auth::user()->id);
         $public_key = Storage::get('keys/' . Auth::user()->username . '.pub');
         $private_key = Storage::get('keys/' . Auth::user()->username . '.key');
+
+        $public_key = $this->DecryptAES($public_key, $user_temp->companyKey->key);
+        $private_key = $this->DecryptAES($private_key, $user_temp->companyKey->key);
 
         $hidden_public_key = new HiddenString($public_key);
         $hidden_private_key = new HiddenString($private_key);
@@ -427,6 +446,13 @@ class RequestMessageController extends Controller
 
         fclose($inputFile);
         fclose($outputFile);
+    }
+
+    public function DecryptAES($ciphertext, $key){
+        $cipher = 'aes-256-cbc';
+        $iv = substr($key, 0, 16);
+        $decrypted = openssl_decrypt(base64_decode($ciphertext), $cipher, $key, 0, $iv);
+        return $decrypted;
     }
 
 }
