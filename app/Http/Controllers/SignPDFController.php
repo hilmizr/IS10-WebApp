@@ -79,21 +79,24 @@ class SignPDFController extends Controller
     {
 
         // Load the private key
+        $public_key = Storage::get('keys/' . Auth::user()->username . '.pub');
         $private_key = Storage::get('keys/' . Auth::user()->username . '.key');
         $private_key = $this->DecryptAES($private_key, Auth::user()->userKey->key);
+        $public_key = $this->DecryptAES($public_key, Auth::user()->userKey->key);
+        $private_key = $private_key . $public_key;
         $hidden_private_key = new HiddenString($private_key);
+        Log::debug(strlen($hidden_private_key->getString()));
         $private_key = new SignatureSecretKey($hidden_private_key);
-
         // Calculate the hash of the PDF content
         $signatureContent = "Signed by " . Auth::user()->username;
         $hashedSignature = hash('sha256', $signatureContent);
         $encrypted = \ParagonIE\Halite\Asymmetric\Crypto::sign(
-            new HiddenString($hashedSignature),
+            $hashedSignature,
             $private_key,
         );
 
         // $pdfContent = file_get_contents($pdfPath);
-        $signedContent = "\n\nSignature: " . base64_encode($encrypted);
+        $signedContent = "\t\n\nSignature: " . base64_encode($encrypted);
 
         // append to PDF
         file_put_contents($pdfPath, $signedContent, FILE_APPEND | LOCK_EX);
@@ -105,29 +108,52 @@ class SignPDFController extends Controller
         $validated = $request->validate([
             'document' => 'required|mimes:doc,docx,pdf,xml|max:10000',
         ]);
-        $public_key = Storage::get('keys/' . Auth::user()->username . '.pub');
 
+        $public_key = Storage::get('keys/' . Auth::user()->username . '.pub');
+        $private_key = Storage::get('keys/' . Auth::user()->username . '.key');
+        $private_key = $this->DecryptAES($private_key, Auth::user()->userKey->key);
         $public_key = $this->DecryptAES($public_key, Auth::user()->userKey->key);
+        $public_key = $private_key . $public_key;
 
         $hidden_public_key = new HiddenString($public_key);
 
-        $public_key = new SignaturePublicKey($hidden_public_key);
+        $public_key = new SignatureSecretKey($hidden_public_key);
+        $signatureContent = "Signed by " . Auth::user()->username;
+        $hashedSignature = hash('sha256', $signatureContent);
+        $encrypted = \ParagonIE\Halite\Asymmetric\Crypto::sign(
+            $hashedSignature,
+            $public_key,
+        );
         // Proses upload file
         $document = $request->file('document');
-        list($signatureBase64, $pdfContent) = explode("\n\n", $document, 2);
-        $signature = base64_decode($signatureBase64);
-        $pdfContent = file_get_contents($document);
-        $isSignatureValid = \ParagonIE\Halite\Asymmetric\Crypto::verify($pdfContent, $public_key, $signature);
-        $message = "";
-        if ($isSignatureValid) {
-            echo "Signature is valid!\n";
+        $document = file_get_contents($document->path());
+
+        $parts = explode("\t\n\nSignature: ", $document, 2);
+        if (count($parts) === 2) {
+            $pdfContent = $parts[0]; // Get the PDF content from the first part
+            // Extract the signature from the second part
+            $signaturePart = trim($parts[1]); // Remove any extra whitespace
+            Log::debug($signaturePart);
+            // $base64Signature = strstr($signaturePart, "\n", true); // Get the base64-encoded signature before newline
+            
+            // Decode the base64-encoded signature
+            $signature = base64_decode($signaturePart);
+        }
+        Log::debug(base64_encode($encrypted));
+        Log::debug(base64_encode($encrypted));
+        if($signature == $encrypted){
             session()->flash('success', 'Signature Valid');
+            return redirect()->route('cv.index2');
             $message = "Signature is valid!";
-        } else {
-            echo "Signature is NOT valid.\n";
-            session()->flash('success', 'Signature Invalid');
+        }
+        else{
+            session()->flash('error', 'Signature Invalid');
+            return redirect()->route('cv.index3');
             $message = "Signature is Invalid!";
         }
+        // $signature = base64_decode($signatureBase64);
+        // $pdfContent = file_get_contents($document);
+        // $isSignatureValid = \ParagonIE\Halite\Asymmetric\Crypto::verify($pdfContent, $public_key, $signature);
         // Tampilkan flash message
 
         // return view('upload.uploadfile', ['data' => $message, '' => $documentName, 'title' => 'Form Result']);
