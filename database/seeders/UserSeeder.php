@@ -54,15 +54,26 @@ class UserSeeder extends Seeder
             ]);
             KeyManager::createClient($user->username, 'user', 'active');
             $keyPair = KeyFactory::generateEncryptionKeyPair();
+            
+            $signatureKeyPair = KeyFactory::generateSignatureKeyPair();
 
             $publicKey = $keyPair->getPublicKey()->getRawKeyMaterial();
             $privateKey = $keyPair->getSecretKey()->getRawKeyMaterial();
-
+            
             $publicKey = $this->EncryptAES($publicKey, $key);
             $privateKey = $this->EncryptAES($privateKey, $key);
-            
+
+            $signaturePublicKey = $signatureKeyPair->getPublicKey()->getRawKeyMaterial();
+            $signaturePrivateKey = $signatureKeyPair->getSecretKey()->getRawKeyMaterial();
+
+            $signaturePublicKey = $this->EncryptAES($signaturePublicKey, $key);
+            $signaturePrivateKey = $this->EncryptAES($signaturePrivateKey, $key);
+
             file_put_contents(Storage::path('keys/' . $user->username . '.pub'), $publicKey);
             file_put_contents(Storage::path('keys/' . $user->username . '.key'), $privateKey);
+
+            file_put_contents(Storage::path('keys/' . $user->username . '.signaturepub'), $signaturePublicKey);
+            file_put_contents(Storage::path('keys/' . $user->username . '.signaturekey'), $signaturePrivateKey);
             
         }
     }
