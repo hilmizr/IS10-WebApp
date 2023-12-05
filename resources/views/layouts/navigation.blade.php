@@ -65,6 +65,19 @@
                         </x-nav-link>
                     @endif
                 </div>
+                @if (Auth::user() instanceof App\Models\CompanyUser)
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                    <x-nav-link :href="route('cv.verify-pdf-index')" :active="request()->routeIs('idcard.index')">
+                        {{ __('Verify PDF') }}
+                    </x-nav-link>
+                </div>
+                @else
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                    <x-nav-link :href="route('cv.sign-pdf-index')" :active="request()->routeIs('idcard.index')">
+                        {{ __('Sign and Verify PDF') }}
+                    </x-nav-link>
+                </div>
+                @endif
                 @if (Auth::user() instanceof App\Models\User)
                     <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                         <x-nav-link :href="route('idcard.index')" :active="request()->routeIs('idcard.index')">

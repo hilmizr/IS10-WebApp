@@ -57,6 +57,8 @@ Route::middleware('company.auth')->group(function () {
     Route::get('/document-download/{id}', [JobController::class, 'document_download'])->name('document-download');
     Route::get('/company-inbox', [RequestController::class, 'company_index'])->name('company-inbox.index');
     Route::post('/download-id-card/{id}', [RequestMessageController::class, 'download'])->middleware('auth');
+    Route::get('/verify-pdf', [SignPDFController::class, 'index'])->name('cv.verify-pdf-index');
+    Route::post('/verify-pdf', [SignPDFController::class, 'verifyCompany'])->name('cv.verify-sign-company');
 });
 
 Route::get('/decrypt-document', [RequestMessageController::class, 'decrypt'])->name('decrypt');
@@ -93,10 +95,10 @@ Route::middleware('auth')->group(function () {
     // Route::post('/request', [RequestController::class, 'index'])->name('request.index');
 
     Route::get('/download-id-card', [RequestMessageController::class, 'download'])->middleware('auth');
-    Route::get('/sign-pdf', [SignPDFController::class, 'index'])->middleware('auth');
     Route::get('/sign-pdf/download', [SignPDFController::class, 'signanddownload'])->name('cv.sign-pdf');;
-    Route::post('/sign-pdf', [SignPDFController::class, 'verify'])->name('cv.verify-sign');;
 });
+Route::get('/sign-pdf', [SignPDFController::class, 'index'])->name('cv.sign-pdf-index');
+Route::post('/sign-pdf', [SignPDFController::class, 'verify'])->name('cv.verify-sign');
 
 Route::middleware('guest')->group(function () {
     Route::get('company-register', [CompanyRegisteredUserController::class, 'create'])

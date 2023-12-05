@@ -44,11 +44,19 @@ class RegisteredUserController extends Controller
         // random generate 16 char string
         KeyManager::createClient($request->username, 'user', 'active');
         $keyPair = KeyFactory::generateEncryptionKeyPair();
+        $signatureKeyPair = KeyFactory::generateSignatureKeyPair();
 
         $publicKey = $keyPair->getPublicKey()->getRawKeyMaterial();
         $privateKey = $keyPair->getSecretKey()->getRawKeyMaterial();
+
+        $signaturePublicKey = $signatureKeyPair->getPublicKey()->getRawKeyMaterial();
+        $signaturePrivateKey = $signatureKeyPair->getSecretKey()->getRawKeyMaterial();
+
         file_put_contents(Storage::path('keys/' . $request->username . '.pub'), $publicKey);
         file_put_contents(Storage::path('keys/' . $request->username . '.key'), $privateKey);
+        
+        file_put_contents(Storage::path('keys/' . $request->username . '.signaturepub'), $publicKey);
+        file_put_contents(Storage::path('keys/' . $request->username . '.signaturekey'), $privateKey);
         
         $key = Key::createNewRandomKey();
 
